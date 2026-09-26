@@ -1,0 +1,2940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zain Mohideen | Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #06060a; }
+
+  /* ============== SCENE (hero copy -> photo -> frame-sequence, one continuous pin) ============== */
+  .scene-scroll-wrapper { position: relative; width: 100%; }
+  .scene-pin {
+    position: sticky; top: 0; height: 100vh; width: 100%;
+    overflow: hidden; background: #06060a; display: flex; align-items: center;
+  }
+  .hero-aurora { position: absolute; inset: 0; z-index: 0; }
+  .hero-aurora canvas { width: 100%; height: 100%; display: block; }
+  .hero-aurora::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, #06060a 0%, transparent 35%);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 2; display: flex; align-items: center; width: 100%; padding: 0 6vw; }
+  .hero-text { max-width: 640px; }
+  .hero-photo {
+    position: absolute; left: 50%; bottom: 0; z-index: 1;
+    transform: translateX(-50%);
+    height: 108vh; display: flex; align-items: flex-end; justify-content: center; pointer-events: none;
+  }
+  .hero-photo img { height: 100%; width: auto; max-width: 62vw; object-fit: contain; object-position: bottom; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.55)); }
+  @media (max-width: 640px) {
+    .hero-photo { display: none; }
+  }
+  .hero-eyebrow {
+    font-family: 'Inter', sans-serif; font-size: 0.8rem; letter-spacing: 0.28em;
+    text-transform: uppercase; color: #8b8895; margin: 0 0 1.75rem;
+  }
+  .hero-heading {
+    margin: 0; font-family: 'Playfair Display', 'Inter', serif; font-weight: 500;
+    color: #f4f2ed; line-height: 1.08; display: flex; flex-direction: column; gap: 0.1em;
+  }
+  .hero-line {
+    font-size: clamp(1.75rem, 4vw, 3rem); font-weight: 500; color: #f4f2ed;
+    text-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    -webkit-text-stroke: 1px rgba(6, 6, 10, 0.8);
+    paint-order: stroke fill;
+  }
+  .hero-dynamic {
+    font-size: clamp(3rem, 8vw, 6.5rem); font-weight: 500;
+    color: #e879f9;
+    text-shadow: 0 6px 24px rgba(232, 121, 249, 0.35), 0 4px 14px rgba(0,0,0,0.4);
+    -webkit-text-stroke: 1.25px rgba(6, 6, 10, 0.8);
+    paint-order: stroke fill;
+  }
+  .hero-dynamic.animate {
+    animation: heroFadeSlide 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes heroFadeSlide {
+    from { opacity: 0; transform: translateY(0.35em); filter: blur(6px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  .hero-hint {
+    position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+    font-family: 'Playfair Display', 'Inter', serif; font-style: italic; font-weight: 600;
+    font-size: 0.85rem; letter-spacing: 0.32em;
+    text-transform: uppercase; margin: 0; z-index: 1;
+    background: linear-gradient(120deg, #f4f2ed 20%, #e879f9 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 4px 16px rgba(232, 121, 249, 0.25);
+    transition: opacity 0.4s ease;
+  }
+
+  /* ============== Consistent "small text" styling system ==============
+     Every piece of supporting copy (bios, descriptions, captions) follows
+     the same rule: <strong> = bright, weighty, off-white; <em> = italic,
+     accent-colored (pink/purple family), slightly lighter weight. Keeps
+     the whole site reading as one considered voice instead of a grab-bag
+     of ad-hoc emphasis. */
+  .about-bio strong,
+  .about-card-desc strong,
+  .works-view-counter strong {
+    color: #f4f2ed;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .about-bio em,
+  .about-card-desc em {
+    font-style: italic;
+    font-weight: 600;
+    color: #e879f9;
+    background: linear-gradient(120deg, #f0abfc, #c084fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .works-view-counter strong {
+    background: linear-gradient(120deg, #f4f2ed, #e879f9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-style: italic;
+  }
+  /* ---- bg-media-desc gets its own richer, category-aware emphasis system:
+     gradient italics, underline-accent bold caps, and a pill "tag chip" ----
+     all three keyed off the section's --accent-a/--accent-b/--accent-line
+     vars, so the styling automatically shifts hue with the active category
+     instead of staying a fixed pink. */
+  .bg-media-desc strong {
+    color: #f4f2ed;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.92em;
+    letter-spacing: 0.09em;
+    border-bottom: 1.5px solid var(--accent-line, rgba(232, 121, 249, 0.6));
+    padding-bottom: 0.05em;
+  }
+  .bg-media-desc em {
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.08em;
+    background: linear-gradient(120deg, var(--accent-a, #e879f9), var(--accent-b, #c084fc));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .bg-media-desc .tag-chip {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.76em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-a, #e879f9);
+    background: var(--accent-shadow, rgba(232, 121, 249, 0.4));
+    border: 1px solid var(--accent-line, rgba(232, 121, 249, 0.6));
+    padding: 0.16em 0.6em 0.14em;
+    border-radius: 999px;
+    margin: 0 0.1em;
+    transform: translateY(-1px);
+  }
+  /* ---- frame-sequence layer, stacked in the same pin, faded/grown in over the hero photo ---- */
+  .reveal-frame-sequence {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+  .reveal-frame-crop {
+    position: absolute;
+    width: 62vw;
+    height: 108vh;
+    overflow: hidden;
+    display: block;
+    background: transparent;
+    -webkit-mask-image: radial-gradient(ellipse 48% 88% at center, black 32%, transparent 92%);
+    mask-image: radial-gradient(ellipse 48% 88% at center, black 32%, transparent 92%);
+  }
+  .reveal-frame-crop img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: bottom;
+    mix-blend-mode: lighten;
+  }
+  /* soft top/bottom vignette so the sequence reads as a designed transition,
+     not a raw clip pasted on the page */
+  .reveal-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,0.6) 100%);
+  }
+
+  .portfolio-section {
+    position: relative;
+    background: linear-gradient(to bottom, #000000 0%, #06060a 8%, #1a0a33 22%, #3b0f6b 42%, #1a0a33 75%, #06060a 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* ---- click-triggered background media layer (video / shatter image), sits
+     above the section gradient but below the dark vignette + content ---- */
+  .portfolio-section {
+    --accent-a: #e879f9;
+    --accent-b: #c084fc;
+    --accent-shadow: rgba(232, 121, 249, 0.4);
+    --accent-line: rgba(232, 121, 249, 0.6);
+  }
+  .portfolio-section[data-category="videography"] {
+    --accent-a: #fb7185;
+    --accent-b: #e879f9;
+    --accent-shadow: rgba(251, 113, 133, 0.4);
+    --accent-line: rgba(251, 113, 133, 0.55);
+  }
+
+  .portfolio-section[data-category="digital-marketing"] {
+    --accent-a: #fbbf24;
+    --accent-b: #fb923c;
+    --accent-shadow: rgba(251, 191, 36, 0.4);
+    --accent-line: rgba(251, 191, 36, 0.55);
+  }
+  .portfolio-bg-media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bg-media-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+  }
+  .bg-media-layer.is-active { opacity: 1; }
+  .bg-shatter { overflow: hidden; }
+  .shatter-piece {
+    position: absolute;
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.85) rotate(0deg);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--piece-delay, 0s);
+  }
+  .bg-shatter.is-active .shatter-piece {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  .portfolio-section::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 70% 65% at 50% 50%, transparent 45%, rgba(0,0,0,0.75) 100%);
+  }
+  .portfolio-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    text-align: center;
+    padding: 6rem 6vw;
+  }
+  .portfolio-heading-wrap {
+    position: relative;
+    z-index: 3;
+    display: inline-block;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+  }
+  .portfolio-heading-wrap.is-hidden {
+    opacity: 0;
+  }
+  .portfolio-heading-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -12% -18%;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .portfolio-heading {
+    margin: 0 0 1.5rem;
+    font-family: 'Playfair Display', 'Inter', serif;
+    font-weight: 500;
+    font-size: clamp(3rem, 9vw, 7.5rem);
+    letter-spacing: 0.03em;
+    color: #f4f2ed;
+    text-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  }
+  .portfolio-heading span {
+    background: linear-gradient(120deg, #f4f2ed 15%, #e879f9 65%, #e879f9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 6px 24px rgba(232, 121, 249, 0.35), 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .portfolio-buttons {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1.8rem;
+    width: max-content;
+    max-width: 94vw;
+  }
+  /* ---- click-triggered center text, shown over the bg video/shatter while
+     a category is selected, styled per category with its own gradient tone ---- */
+  .bg-media-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-115% - 60px));
+    z-index: 5;
+    margin: 0;
+    text-align: center;
+    font-family: 'Playfair Display', 'Inter', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: clamp(1.7rem, 4.2vw, 3.2rem);
+    letter-spacing: 0.005em;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(120deg, #f4f2ed 8%, var(--accent-a, #e879f9) 52%, var(--accent-b, #c084fc) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 6px 30px var(--accent-shadow, rgba(232, 121, 249, 0.4));
+    filter: blur(6px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease, background 0.6s ease, text-shadow 0.6s ease;
+  }
+  .bg-media-title.is-active {
+    opacity: 1;
+    transform: translate(-50%, calc(-105% - 60px));
+    filter: blur(0);
+  }
+  /* ---- click-triggered divider, a thin accent-colored rule that draws in
+     between the title and description ---- */
+  .bg-media-divider {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-8% - 60px)) scaleX(0.25);
+    z-index: 5;
+    width: 58px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-line, rgba(232, 121, 249, 0.6)), transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease 0.05s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, background 0.6s ease;
+  }
+  .bg-media-divider.is-active {
+    opacity: 1;
+    transform: translate(-50%, calc(-8% - 60px)) scaleX(1);
+  }
+  /* ---- click-triggered description text, trails just below the title with
+     a slight delay so the two read as one coordinated reveal ---- */
+  .bg-media-desc {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(40% - 60px));
+    z-index: 5;
+    margin: 0;
+    max-width: 440px;
+    padding: 0 1.5rem;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: clamp(0.8rem, 1.25vw, 0.95rem);
+    line-height: 1.75;
+    letter-spacing: 0.03em;
+    color: rgba(244, 242, 237, 0.75);
+    opacity: 0;
+    pointer-events: none;
+    filter: blur(6px);
+    text-shadow: 0 4px 16px rgba(0,0,0,0.55);
+    transition: opacity 0.55s ease 0.1s, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, filter 0.55s ease 0.1s;
+  }
+  .bg-media-desc.is-active {
+    opacity: 1;
+    transform: translate(-50%, calc(55% - 60px));
+    filter: blur(0);
+  }
+  /* ---- click-triggered "Enter" button, sits just below the description
+     and jumps straight to the full-screen works view for that category.
+     Hover on it is a pure visual highlight (scale/glow); it does not open
+     anything until actually clicked. ---- */
+  .bg-media-enter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(210% + 70px)) scale(1);
+    z-index: 5;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #f4f2ed;
+    background: rgba(8, 6, 14, 0.35);
+    border: 1px solid var(--accent-line, rgba(232, 121, 249, 0.6));
+    padding: 0.7rem 1.7rem;
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    pointer-events: none;
+    filter: blur(6px);
+    transition: opacity 0.55s ease 0.15s, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, filter 0.55s ease 0.15s, background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+  .bg-media-enter.is-active {
+    opacity: 1;
+    transform: translate(-50%, calc(240% + 70px)) scale(1);
+    filter: blur(0);
+    pointer-events: auto;
+  }
+  .bg-media-enter:hover {
+    background: linear-gradient(120deg, rgba(232, 121, 249, 0.28), rgba(95, 30, 206, 0.28));
+    border-color: var(--accent-a, #e879f9);
+    color: #ffffff;
+    box-shadow: 0 10px 26px var(--accent-shadow, rgba(232, 121, 249, 0.3));
+  }
+  .bg-media-enter.is-active:hover {
+    transform: translate(-50%, calc(240% + 70px)) scale(1.07);
+  }
+  .portfolio-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #f4f2ed;
+    background: rgba(8, 6, 14, 0.22);
+    border: 1px solid rgba(232, 121, 249, 0.45);
+    padding: 1.1rem 2.2rem;
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transform: scale(1);
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease, color 0.35s ease;
+  }
+  /* Hover is a pure visual highlight now — it grows/brightens the pill but
+     does not reveal the background media or preview thumbnails. That only
+     happens once the button is actually clicked (see .is-selected below). */
+  .portfolio-btn:hover {
+    background: linear-gradient(120deg, rgba(232, 121, 249, 0.18), rgba(95, 30, 206, 0.18));
+    border-color: #e879f9;
+    color: #ffffff;
+    box-shadow: 0 10px 28px rgba(232, 121, 249, 0.28);
+    transform: scale(1.07);
+  }
+  /* Selected state — applied once the button has been clicked and its
+     category is the active one, so it's visually obvious which pill is
+     "on" even after the pointer moves away. */
+  .portfolio-btn-wrap.is-selected .portfolio-btn {
+    background: linear-gradient(120deg, rgba(232, 121, 249, 0.3), rgba(95, 30, 206, 0.3));
+    border-color: #e879f9;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(232, 121, 249, 0.35);
+  }
+  .portfolio-btn-wrap.is-selected .portfolio-btn:hover {
+    transform: scale(1.07);
+  }
+  .portfolio-btn-wrap {
+    display: inline-flex;
+  }
+  /* Once a category is selected, the pill labels themselves step back
+     visually (the title/description now own that space) — but stay in
+     place and clickable so switching/closing categories still works.
+     Only .portfolio-btn is targeted here, never .work-preview, so the
+     thumbnail clips underneath stay at full brightness. */
+  .portfolio-buttons.is-browsing .portfolio-btn {
+    opacity: 0.16;
+    transition: opacity 0.4s ease, background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease, color 0.35s ease;
+  }
+  .portfolio-buttons.is-browsing .portfolio-btn-wrap.is-selected .portfolio-btn {
+    opacity: 0.55;
+  }
+  .portfolio-buttons.is-browsing .portfolio-btn:hover,
+  .portfolio-buttons.is-browsing .portfolio-btn-wrap.is-selected .portfolio-btn:hover {
+    opacity: 1;
+  }
+  .work-preview {
+    position: absolute;
+    top: calc(100% + 65px);
+    left: 50%;
+    transform: translate(-50%, -8px);
+    z-index: 10;
+    display: flex;
+    gap: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+  }
+  .portfolio-btn-wrap[data-category="videography"] .work-preview {
+    top: calc(100% + 140px);
+  }
+  .portfolio-btn-wrap[data-category="digital-marketing"] .work-preview {
+    top: calc(100% + 115px);
+  }
+  .portfolio-btn-wrap.is-active .work-preview {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+  .work-thumb {
+    position: relative;
+    width: 158px;
+    height: 98px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(232,121,249,0.85), rgba(147,51,234,0.95));
+    border: 1.5px solid rgba(232, 121, 249, 0.95);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 42px rgba(232, 121, 249, 0.55);
+    flex-shrink: 0;
+  }
+  .work-thumb video,
+  .work-thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    filter: brightness(1.22) contrast(1.08) saturate(1.12);
+    transition: opacity 0.25s ease;
+  }
+  .work-thumb video.is-showing,
+  .work-thumb img.is-showing {
+    opacity: 1;
+  }
+  @media (max-width: 640px) {
+    .portfolio-btn { font-size: 1rem; padding: 1.2rem 2.2rem; }
+    .portfolio-buttons { flex-wrap: wrap; gap: 0.6rem; }
+    .work-thumb { width: 110px; height: 68px; }
+    .work-preview { gap: 0.5rem; }
+    .bg-media-desc { max-width: 320px; font-size: 0.8rem; }
+    .bg-media-enter { font-size: 0.68rem; padding: 0.6rem 1.3rem; }
+  }
+
+  /* ---- floating camera-part decorations, drifting slowly in place ---- */
+  .camera-explode {
+    position: relative;
+    width: min(680px, 56vw);
+    aspect-ratio: 797 / 662;
+    margin: 2rem auto 0;
+  }
+  .camera-parts {
+    position: absolute;
+    inset: 0;
+    opacity: 1;
+    transition: opacity 0.5s ease, filter 0.5s ease;
+  }
+  .camera-parts.is-dimmed {
+    opacity: 0.25;
+    filter: blur(1px);
+  }
+  .part-slot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+  }
+  .part-drift { display: block; }
+  .part-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: blur(5px) drop-shadow(0 14px 30px rgba(0,0,0,0.55));
+  }
+
+  @keyframes driftA {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    25%  { transform: translate(14px, -18px) rotate(10deg); }
+    50%  { transform: translate(-6px, -30px) rotate(-6deg); }
+    75%  { transform: translate(-16px, -10px) rotate(7deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+  @keyframes driftB {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    30%  { transform: translate(-18px, 14px) rotate(-12deg); }
+    60%  { transform: translate(10px, 26px) rotate(9deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+  @keyframes driftC {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50%  { transform: translate(16px, 16px) rotate(8deg) scale(1.03); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  }
+
+  .pt-grip        { left: 29.2%; top: 27.9%; width: 16.0%; }
+  .pt-grip .part-drift        { animation: driftB 14s ease-in-out infinite; animation-delay: -2s; }
+
+  .pt-top-evf     { left: 66.2%; top: 25.4%; width: 26.6%; }
+  .pt-top-evf .part-drift     { animation: driftA 16s ease-in-out infinite; animation-delay: -6s; }
+
+  .pt-body-lens   { left: 49.1%; top: 55.5%; width: 54.2%; z-index: 1; }
+  .pt-body-lens .part-drift   { animation: driftC 18s ease-in-out infinite; animation-delay: -3s; }
+
+  .pt-circuit     { left: 91.5%; top: 58.1%; width: 9.4%; }
+  .pt-circuit .part-drift     { animation: driftA 12s ease-in-out infinite; animation-delay: -8s; }
+
+  .pt-flip-screen { left: 65.4%; top: 84.8%; width: 24.7%; }
+  .pt-flip-screen .part-drift { animation: driftB 15s ease-in-out infinite; animation-delay: -4s; }
+
+  .pt-small-evf   { left: 29.1%; top: 84.4%; width: 14.1%; }
+  .pt-small-evf .part-drift   { animation: driftC 13s ease-in-out infinite; animation-delay: -7s; }
+
+  .pt-strap       { left: 8.1%; top: 54.4%; width: 7.2%; opacity: 0.75; }
+  .pt-strap .part-drift       { animation: driftA 11s ease-in-out infinite; animation-delay: -1s; }
+
+  @media (max-width: 640px) {
+    .camera-explode { width: 68vw; margin-top: 1rem; }
+    .pt-strap { display: none; }
+  }
+  .about-section {
+    position: relative;
+    background: #06060a;
+    padding: clamp(4rem, 10vh, 7rem) 6vw;
+  }
+  .about-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .about-heading {
+    margin: 0 0 2.5rem;
+    font-family: 'Playfair Display', 'Inter', serif;
+    font-weight: 500;
+    font-size: clamp(2.75rem, 7vw, 5.5rem);
+    letter-spacing: 0.03em;
+    color: #f4f2ed;
+    text-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  }
+  .about-heading span {
+    background: linear-gradient(120deg, #f4f2ed 15%, #e879f9 65%, #e879f9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 6px 24px rgba(232, 121, 249, 0.35), 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .about-layout {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+    text-align: left;
+  }
+  .about-bio {
+    max-width: 560px;
+    margin: 0 0 2.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+    line-height: 1.75;
+    color: #c9c6d1;
+  }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .about-card {
+    position: relative;
+    padding: 1.9rem 1.75rem;
+    border-radius: 16px;
+    background: linear-gradient(160deg, rgba(232, 121, 249, 0.07), rgba(95, 30, 206, 0.05));
+    border: 1px solid rgba(232, 121, 249, 0.22);
+    transition: border-color 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
+  }
+  .about-card:hover {
+    border-color: rgba(232, 121, 249, 0.55);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.4);
+  }
+  .about-card-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.24em;
+    margin: 0 0 0.85rem;
+    background: linear-gradient(120deg, #f0abfc, #e879f9 60%, #c084fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .about-card-title {
+    font-family: 'Playfair Display', 'Inter', serif;
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #f4f2ed;
+    margin: 0 0 0.6rem;
+  }
+  .about-card-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #a9a5b5;
+    margin: 0;
+  }
+
+  /* ---- InfiniteMenu (work gallery), right side of About ---- */
+  .about-menu-wrap {
+    position: relative;
+    width: 100%;
+    height: clamp(380px, 46vw, 560px);
+    border-radius: 20px;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, rgba(232, 121, 249, 0.08), rgba(6,6,10,0.4) 70%);
+    border: 1px solid rgba(232, 121, 249, 0.22);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+  }
+  #infinite-grid-menu-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+  }
+  #infinite-grid-menu-canvas:active { cursor: grabbing; }
+  .face-title {
+    position: absolute;
+    left: 1.5rem;
+    bottom: 1.5rem;
+    margin: 0;
+    font-family: 'Playfair Display', 'Inter', serif;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #f4f2ed;
+    text-shadow: 0 4px 14px rgba(0,0,0,0.6);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+  .face-title.active { opacity: 1; transform: translateY(0); }
+  .face-title.inactive { opacity: 0; transform: translateY(6px); }
+  .action-button {
+    position: absolute;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(232, 121, 249, 0.18);
+    border: 1px solid rgba(232, 121, 249, 0.45);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+  }
+  .action-button:hover { background: rgba(232, 121, 249, 0.32); }
+  .action-button.active { opacity: 1; }
+  .action-button.inactive { opacity: 0; pointer-events: none; }
+  .action-button-icon {
+    margin: 0;
+    color: #f4f2ed;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  @media (max-width: 900px) {
+    .about-grid { grid-template-columns: 1fr; }
+    .about-layout { grid-template-columns: 1fr; }
+    .about-menu-wrap { height: 62vw; }
+  }
+
+  /* ============== WORKS VIEW (full-screen takeover shown after clicking
+     "Enter" for a portfolio category) ============== */
+  body.works-view-active { overflow: hidden; }
+
+  .works-view {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 2rem) 4vw;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.98);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.5s;
+  }
+  .works-view::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(20, 8, 30, 0.55) 0%, rgba(0,0,0,0) 40%, #000000 100%);
+  }
+  .works-view.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
+  }
+  .works-view-back {
+    position: absolute;
+    top: clamp(1rem, 3vh, 2rem);
+    left: 4vw;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #f4f2ed;
+    background: rgba(8, 6, 14, 0.4);
+    border: 1px solid rgba(232, 121, 249, 0.45);
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s ease, color 0.35s ease;
+  }
+  .works-view-back:hover {
+    background: linear-gradient(120deg, rgba(232, 121, 249, 0.22), rgba(95, 30, 206, 0.22));
+    border-color: #e879f9;
+    color: #ffffff;
+    transform: translateX(-3px);
+  }
+  .works-view-back svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .works-view-title {
+    display: none;
+  }
+  .works-view-stage {
+    position: relative;
+    z-index: 1;
+    width: min(92vw, 43.9vh);
+    aspect-ratio: 9 / 16;
+    height: auto;
+    max-height: 74vh;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid rgba(232, 121, 249, 0.25);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 60px rgba(232, 121, 249, 0.10);
+  }
+  .works-view-video,
+  .works-view-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    display: none;
+  }
+  .works-view-video.is-showing,
+  .works-view-image.is-showing { display: block; }
+  /* ---- prev/next arrow controls, flanking the video stage ---- */
+  .works-view-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    color: #f4f2ed;
+    background: rgba(8, 6, 14, 0.45);
+    border: 1px solid rgba(232, 121, 249, 0.45);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transform: translateY(-50%);
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease, color 0.3s ease;
+  }
+  .works-view-nav:hover {
+    background: linear-gradient(120deg, rgba(232, 121, 249, 0.28), rgba(95, 30, 206, 0.28));
+    border-color: #e879f9;
+    color: #ffffff;
+  }
+  .works-view-nav:active { transform: translateY(-50%) scale(0.94); }
+  .works-view-nav svg { width: 20px; height: 20px; flex-shrink: 0; pointer-events: none; }
+  .works-view-nav-prev { left: clamp(8px, 2vw, 24px); }
+  .works-view-nav-next { right: clamp(8px, 2vw, 24px); }
+  .works-view-nav[disabled] {
+    opacity: 0.25;
+    cursor: default;
+    pointer-events: none;
+  }
+  .works-view-counter {
+    position: relative;
+    z-index: 1;
+    margin-top: 1.25rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(244, 242, 237, 0.6);
+  }
+  @media (max-width: 640px) {
+    .works-view { padding: 1rem 4vw; }
+    .works-view-back { padding: 0.6rem 1.1rem; font-size: 0.68rem; top: 1rem; left: 4vw; }
+    .works-view-stage { width: min(78vw, 60vh); max-height: 66vh; border-radius: 14px; }
+    .works-view-nav { width: 38px; height: 38px; }
+    .works-view-nav svg { width: 16px; height: 16px; }
+    .works-view-nav-prev { left: 6px; }
+    .works-view-nav-next { right: 6px; }
+    .works-view-counter { margin-top: 0.9rem; font-size: 0.68rem; }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="scene-scroll-wrapper" id="sceneWrapper">
+  <section class="scene-pin" id="scenePin">
+    <div class="hero-aurora" id="auroraMount"></div>
+
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-heading">
+          <span class="hero-line">Hi, I'm</span>
+          <span class="hero-dynamic" id="dynamicText">Zain Mohideen</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="hero-photo" id="heroPhotoWrap">
+      <!--
+        Point this at your photo file (same folder as index.html).
+        Swap "hero-photo.png" for your actual filename, or replace this
+        src with your original base64 data URI if you'd rather keep it inline.
+        The onerror hides the slot cleanly (no broken-image icon) until
+        a real file is in place.
+      -->
+      <img id="heroPhotoImg" src="hero-photo.png" alt="Zain Mohideen holding a camera"
+           onerror="this.parentElement.style.display='none'" />
+    </div>
+
+    <p class="hero-hint" id="hint">Scroll</p>
+
+    <div class="reveal-frame-sequence" id="revealFrameWrap">
+      <div class="reveal-frame-crop" id="revealFrameCrop">
+        <img id="revealFrame" src="Frames/ezgif-frame-001.jpg" alt="" />
+      </div>
+    </div>
+    <div class="reveal-vignette" id="revealVignette"></div>
+  </section>
+</div>
+
+<section class="portfolio-section">
+
+  <div class="portfolio-bg-media" id="portfolioBgMedia">
+    <video class="bg-media-layer" id="bgVideoVideography" muted loop playsinline preload="none" src="media/cam-hover.mp4"></video>
+
+    <video class="bg-media-layer" id="bgVideoMarketing" muted loop playsinline preload="none" src="media/marketing-hover.mp4"></video>
+  </div>
+
+  <div class="portfolio-content">
+    <div class="portfolio-heading-wrap">
+      <h2 class="portfolio-heading"><span>PORTFOLIO</span></h2>
+    </div>
+
+    <!-- exploded camera parts: each drifts/rotates slowly on its own,
+         and reacts (scales, brightens, pauses drift) on hover -->
+    <div class="camera-explode">
+      <div class="camera-parts" id="cameraParts">
+        <div class="part-slot pt-grip" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/grip_top.png" alt=""></div>
+        </div>
+        <div class="part-slot pt-top-evf" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/top_evf_body.png" alt=""></div>
+        </div>
+        <div class="part-slot pt-strap" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/sliver_13.png" alt=""></div>
+        </div>
+        <div class="part-slot pt-body-lens" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/body_lens_group.png" alt=""></div>
+        </div>
+        <div class="part-slot pt-circuit" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/circuit_board.png" alt=""></div>
+        </div>
+        <div class="part-slot pt-small-evf" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/small_evf.png" alt=""></div>
+        </div>
+        <div class="part-slot pt-flip-screen" aria-hidden="true">
+          <div class="part-drift"><img class="part-img" src="parts/flip_screen.png" alt=""></div>
+        </div>
+      </div>
+
+      <div class="portfolio-buttons">
+        <div class="portfolio-btn-wrap" data-category="videography">
+          <div class="work-preview" aria-hidden="true">
+            <div class="work-thumb" data-type="video">
+              <video muted playsinline preload="none" src="works/zedit1.mp4"
+                     onerror="this.style.display='none'"></video>
+            </div>
+            <div class="work-thumb" data-type="video">
+              <video muted playsinline preload="none" src="works/zedit2.mp4"
+                     onerror="this.style.display='none'"></video>
+            </div>
+          </div>
+          <button class="portfolio-btn" type="button">Videography</button>
+        </div>
+
+
+
+        <div class="portfolio-btn-wrap" data-category="digital-marketing">
+          <div class="work-preview" aria-hidden="true">
+            <div class="work-thumb" data-type="video">
+              <video muted playsinline preload="none" src="works/IMG_2070.mp4"
+                     onerror="this.style.display='none'"></video>
+            </div>
+            <div class="work-thumb" data-type="video">
+              <video muted playsinline preload="none" src="works/IMG_2102.mp4"
+                     onerror="this.style.display='none'"></video>
+            </div>
+          </div>
+          <button class="portfolio-btn" type="button">Content Marketing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="bg-media-title" id="bgMediaTitle"></h3>
+  <div class="bg-media-divider" id="bgMediaDivider"></div>
+  <p class="bg-media-desc" id="bgMediaDesc"></p>
+  <button class="bg-media-enter" id="bgMediaEnter" type="button">Enter</button>
+</section>
+
+<section class="works-view" id="worksView" aria-hidden="true">
+  <button class="works-view-back" id="worksViewBack" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back
+  </button>
+  <h2 class="works-view-title" id="worksViewTitle"></h2>
+  <div class="works-view-stage">
+    <video class="works-view-video" id="worksViewVideo" controls playsinline preload="metadata"></video>
+    <img class="works-view-image" id="worksViewImage" alt="" />
+    <button class="works-view-nav works-view-nav-prev" id="worksViewPrev" type="button" aria-label="Previous clip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="works-view-nav works-view-nav-next" id="worksViewNext" type="button" aria-label="Next clip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+  <p class="works-view-counter" id="worksViewCounter"></p>
+</section>
+
+<section class="about-section">
+  <div class="about-content">
+    <h2 class="about-heading">ABOUT <span>ME</span></h2>
+
+    <div class="about-layout">
+      <div class="about-text">
+        <p class="about-bio">
+          I'm Zain Mohideen, a <strong>multidisciplinary creative</strong> working across
+          <em>video</em>, <em>web</em>, and <em>marketing</em>. I help brands tell their story
+          on screen, build the sites that host it, and run the campaigns that get it seen,
+          <em>all under one roof</em>.
+        </p>
+
+        <div class="about-grid">
+          <div class="about-card">
+            <p class="about-card-num">01</p>
+            <h3 class="about-card-title">Videographer</h3>
+            <p class="about-card-desc">
+              <strong>End-to-end</strong> video production: <em>filming</em>, <em>color grading</em>,
+              and <em>narrative editing</em>, for brand films, social content, and promotional work.
+            </p>
+          </div>
+
+          <div class="about-card">
+            <p class="about-card-num">02</p>
+            <h3 class="about-card-title">Web Developer</h3>
+            <p class="about-card-desc">
+              <strong>Responsive</strong>, <em>fast-loading</em> websites built with modern
+              front-end tools, from landing pages to full portfolio and business sites.
+            </p>
+          </div>
+
+          <div class="about-card">
+            <p class="about-card-num">03</p>
+            <h3 class="about-card-title">Digital Marketer</h3>
+            <p class="about-card-desc">
+              <strong>Social</strong> and <em>search</em> campaigns built on content strategy
+              and analytics, focused on growing reach and turning attention into results.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-menu-wrap" id="aboutMenuWrap">
+        <canvas id="infinite-grid-menu-canvas"></canvas>
+        <h3 class="face-title" id="infiniteMenuTitle"></h3>
+        <div class="action-button" id="infiniteMenuButton" aria-hidden="true">
+          <p class="action-button-icon">&#x2197;</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ---------- Aurora background, plain WebGL2 (same shader as the React component) ---------- */
+const ROLES = [
+  'Zain Mohideen',
+  'a Creative Editor',
+  'a Digital Marketer',
+  'a Web Developer',
+  'a Video Producer',
+  'a Brand Strategist',
+  'a Storyteller'
+];
+
+const COLOR_STOPS = ['#5f1ece', '#5004d1', '#5227FF'];
+const AMPLITUDE = 1.1;
+const BLEND = 0.55;
+const SPEED = 0.4;
+
+function hexToRgb(hex) {
+  const c = hex.replace('#', '');
+  return [
+    parseInt(c.substring(0, 2), 16) / 255,
+    parseInt(c.substring(2, 4), 16) / 255,
+    parseInt(c.substring(4, 6), 16) / 255
+  ];
+}
+
+const VERT = `#version 300 es
+in vec2 position;
+void main() { gl_Position = vec4(position, 0.0, 1.0); }`;
+
+const FRAG = `#version 300 es
+precision highp float;
+uniform float uTime;
+uniform float uAmplitude;
+uniform vec3 uColorStops[3];
+uniform vec2 uResolution;
+uniform float uBlend;
+out vec4 fragColor;
+
+vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+
+float snoise(vec2 v){
+  const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+  vec2 i  = floor(v + dot(v, C.yy));
+  vec2 x0 = v - i + dot(i, C.xx);
+  vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  vec4 x12 = x0.xyxy + C.xxzz;
+  x12.xy -= i1;
+  i = mod(i, 289.0);
+  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+  vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+  m = m * m; m = m * m;
+  vec3 x = 2.0 * fract(p * C.www) - 1.0;
+  vec3 h = abs(x) - 0.5;
+  vec3 ox = floor(x + 0.5);
+  vec3 a0 = x - ox;
+  m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+  vec3 g;
+  g.x  = a0.x  * x0.x  + h.x  * x0.y;
+  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+  return 130.0 * dot(m, g);
+}
+
+struct ColorStop { vec3 color; float position; };
+
+#define COLOR_RAMP(colors, factor, finalColor) {              \
+  int index = 0;                                            \
+  for (int i = 0; i < 2; i++) {                               \
+     ColorStop currentColor = colors[i];                    \
+     bool isInBetween = currentColor.position <= factor;    \
+     index = int(mix(float(index), float(i), float(isInBetween))); \
+  }                                                         \
+  ColorStop currentColor = colors[index];                   \
+  ColorStop nextColor = colors[index + 1];                  \
+  float range = nextColor.position - currentColor.position; \
+  float lerpFactor = (factor - currentColor.position) / range; \
+  finalColor = mix(currentColor.color, nextColor.color, lerpFactor); \
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uResolution;
+  ColorStop colors[3];
+  colors[0] = ColorStop(uColorStops[0], 0.0);
+  colors[1] = ColorStop(uColorStops[1], 0.5);
+  colors[2] = ColorStop(uColorStops[2], 1.0);
+  vec3 rampColor;
+  COLOR_RAMP(colors, uv.x, rampColor);
+  float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
+  height = exp(height);
+  height = (uv.y * 2.0 - height + 0.2);
+  float intensity = 0.6 * height;
+  float midPoint = 0.20;
+  float auroraAlpha = smoothstep(midPoint - uBlend * 0.5, midPoint + uBlend * 0.5, intensity);
+  vec3 auroraColor = intensity * rampColor;
+  fragColor = vec4(auroraColor * auroraAlpha, auroraAlpha);
+}`;
+
+function initAurora(mount) {
+  try {
+    const canvas = document.createElement('canvas');
+    mount.appendChild(canvas);
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: true });
+    if (!gl) {
+      console.error('Aurora: WebGL2 is not supported in this browser.');
+      mount.style.background = 'linear-gradient(135deg, #6C4CFF, #FF4D8D, #33E6C0)';
+      return;
+    }
+    gl.clearColor(0, 0, 0, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    function compile(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(s));
+      }
+      return s;
+    }
+
+    const program = gl.createProgram();
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FRAG));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.error('Aurora: shader link failed —', gl.getProgramInfoLog(program));
+    }
+    gl.useProgram(program);
+
+    // full-screen triangle
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const posLoc = gl.getAttribLocation(program, 'position');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const uAmplitude = gl.getUniformLocation(program, 'uAmplitude');
+    const uColorStops = gl.getUniformLocation(program, 'uColorStops[0]');
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uBlend = gl.getUniformLocation(program, 'uBlend');
+
+    const flatColors = new Float32Array(COLOR_STOPS.flatMap(hexToRgb));
+    gl.uniform3fv(uColorStops, flatColors);
+    gl.uniform1f(uAmplitude, AMPLITUDE);
+    gl.uniform1f(uBlend, BLEND);
+
+    function resize() {
+      const w = mount.offsetWidth, h = mount.offsetHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function frame(t) {
+      requestAnimationFrame(frame);
+      gl.uniform1f(uTime, t * 0.01 * SPEED * 0.1);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    requestAnimationFrame(frame);
+  } catch (err) {
+    console.error('Aurora failed to initialize:', err);
+  }
+}
+
+initAurora(document.getElementById('auroraMount'));
+
+/* ---------- Single continuous scroll-driven scene ---------- */
+/* One sticky pin, three phases inside the same scroll distance:
+   1) role text cycles over the photo
+   2) photo dissolves + grows into the first video frame, in place
+   3) video frame-sequence scrubs to the end
+   No section boundary, no hand-off — it's one scroll timeline. */
+try {
+
+const sceneWrapper = document.getElementById('sceneWrapper');
+const scenePin = document.getElementById('scenePin');
+const dynamicText = document.getElementById('dynamicText');
+const hint = document.getElementById('hint');
+const heroTextBlock = document.querySelector('.hero-text');
+const heroPhotoBlock = document.getElementById('heroPhotoWrap');
+const heroPhotoImg = document.getElementById('heroPhotoImg');
+const heroAuroraBlock = document.getElementById('auroraMount');
+const revealFrameWrap = document.getElementById('revealFrameWrap');
+const revealFrameCrop = document.getElementById('revealFrameCrop');
+const frameImg = document.getElementById('revealFrame');
+
+const FRAME_COUNT = 105;
+// The scrub holds on this frame instead of playing through to FRAME_COUNT —
+// tune this if it's not landing exactly on the exploded-parts shot.
+const STOP_FRAME = 70;
+const FRAME_DIR = 'Frames';
+const FRAME_PREFIX = 'ezgif-frame-';
+const FRAME_PAD = 3;
+const FRAME_EXT = '.jpg';
+
+function frameSrc(i) {
+  return FRAME_DIR + '/' + FRAME_PREFIX + String(i).padStart(FRAME_PAD, '0') + FRAME_EXT;
+}
+
+// Preload every frame up front so scrubbing never shows a blank
+// or half-loaded image while the user is actively scrolling.
+const preloadedFrames = [];
+for (let i = 1; i <= FRAME_COUNT; i++) {
+  const im = new Image();
+  im.src = frameSrc(i);
+  preloadedFrames.push(im);
+}
+
+const ROLES_VH = ROLES.length * 100;   // role text cycles through the photo
+const FADEOUT_VH = 90;                 // text + photo dissolve away, screen holds blank
+const CROSSFADE_VH = 90;               // video dissolves + grows in from that blank moment
+const SCRUB_VH = Math.round(420 * STOP_FRAME / FRAME_COUNT); // scaled to STOP_FRAME so there's no dead hold after the freeze
+const BLACKOUT_VH = 25;                // after the last frame, dissolve the sequence into pitch black
+const TOTAL_VH = ROLES_VH + FADEOUT_VH + CROSSFADE_VH + SCRUB_VH + BLACKOUT_VH;
+const ROLES_END = ROLES_VH / TOTAL_VH;
+const FADEOUT_END = (ROLES_VH + FADEOUT_VH) / TOTAL_VH;
+const CROSSFADE_END = (ROLES_VH + FADEOUT_VH + CROSSFADE_VH) / TOTAL_VH;
+const SCRUB_END = (ROLES_VH + FADEOUT_VH + CROSSFADE_VH + SCRUB_VH) / TOTAL_VH;
+
+// Photo's on-screen box (matches .hero-photo img's CSS) grown up to the
+// full transition size over the crossfade phase.
+const START_MAX_W_VW = 62;
+const END_MAX_W_VW = 88;
+const START_MAX_H_VH = 108;
+const END_MAX_H_VH = 100;
+
+// Baked-in border on the source frames gets cropped by scaling the image
+// up inside its fixed-aspect box (overflow hidden). Zooming in a bit more
+// as the scrub progresses keeps that edge cropped out and adds a subtle
+// creeping push-in over the course of the transition.
+const CROP_SCALE_START = 1.0;
+const CROP_SCALE_END = 1.05;
+
+// How far the whole background scene (aurora + photo) pans down during
+// the fade-out phase — like a camera panning down — before the video
+// frame-sequence takes over in the same spot. Tune this if the pan
+// should travel further/less before the handoff.
+const PHOTO_DROP_VH = 60;
+
+sceneWrapper.style.height = TOTAL_VH + 'vh';
+
+// Section background crossfades from the hero tone into the video's own
+// tone across the transition, so there's no color flash/hard edge when
+// the frame-sequence takes over — it reads as one continuous backdrop.
+const HERO_BG_RGB = [6, 6, 10];     // #06060a
+const VIDEO_BG_RGB = [6, 6, 10];  // matches the site's actual dark tone so the frame blends seamlessly, not pure black
+
+function lerpColor(a, b, t) {
+  const r = Math.round(a[0] + (b[0] - a[0]) * t);
+  const g = Math.round(a[1] + (b[1] - a[1]) * t);
+  const bch = Math.round(a[2] + (b[2] - a[2]) * t);
+  return 'rgb(' + r + ', ' + g + ', ' + bch + ')';
+}
+
+function smoothstep(t) {
+  const c = Math.min(Math.max(t, 0), 1);
+  return c * c * (3 - 2 * c);
+}
+
+// ---- Exact-position anchor: measure the hero photo's real rendered box
+// (in px, relative to the pin) so the video crop can start from precisely
+// where the photo sits — no vw/vh guessing, no visible seam or "drop". ----
+let anchorRect = null; // { left, top, width, height } in px, relative to scenePin
+
+function measureAnchorRect() {
+  const pinRect = scenePin.getBoundingClientRect();
+  const imgRect = heroPhotoImg.getBoundingClientRect();
+  // Fallback while the real photo hasn't loaded/rendered yet (e.g. broken src):
+  // approximate using the same box the CSS would have produced.
+  if (!imgRect.width || !imgRect.height) {
+    const w = Math.min(window.innerWidth * (START_MAX_W_VW / 100), window.innerWidth);
+    const h = window.innerHeight * (START_MAX_H_VH / 100);
+    anchorRect = {
+      left: pinRect.width / 2 - w / 2,
+      top: pinRect.height - h,
+      width: w,
+      height: h
+    };
+    return;
+  }
+  anchorRect = {
+    left: imgRect.left - pinRect.left,
+    top: imgRect.top - pinRect.top,
+    width: imgRect.width,
+    height: imgRect.height
+  };
+}
+
+// End box (px) for the crossfade/scrub target size, still centered
+// horizontally and bottom-anchored to the pin, just like the anchor.
+function getEndRect() {
+  const pinRect = scenePin.getBoundingClientRect();
+  const w = window.innerWidth * (END_MAX_W_VW / 100);
+  const h = window.innerHeight * (END_MAX_H_VH / 100);
+  const rightMargin = window.innerWidth * 0.02;
+  return {
+    left: pinRect.width - w - rightMargin,
+    top: pinRect.height - h,
+    width: w,
+    height: h
+  };
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function setCropRect(rect) {
+  revealFrameCrop.style.left = rect.left + 'px';
+  revealFrameCrop.style.top = rect.top + 'px';
+  revealFrameCrop.style.width = rect.width + 'px';
+  revealFrameCrop.style.height = rect.height + 'px';
+}
+
+if (heroPhotoImg.complete) {
+  measureAnchorRect();
+} else {
+  heroPhotoImg.addEventListener('load', measureAnchorRect);
+}
+window.addEventListener('resize', measureAnchorRect);
+
+let currentIndex = 0;
+let lastFrame = -1;
+let ticking = false;
+let autoAdvanced = false;
+
+// NOTE: these are declared here (before updateScene is defined/called
+// below) because updateScene's final phase reads/writes
+// discretePhaseActive — declaring it further down as a separate "step
+// control" block meant updateScene() could run before that line executed
+// and throw (temporal-dead-zone), which would silently abort this whole
+// script block and stop every click handler below (including the
+// portfolio buttons) from ever being wired up.
+let roleStep = 0;
+let discretePhaseActive = true;
+let stepLocked = false;
+const STEP_LOCK_MS = 260;
+
+function updateScene() {
+  ticking = false;
+
+  if (!anchorRect) measureAnchorRect();
+
+  const rect = sceneWrapper.getBoundingClientRect();
+  const scrollable = rect.height - window.innerHeight;
+  const progress = scrollable > 0 ? -rect.top / scrollable : 0;
+  const clamped = Math.min(Math.max(progress, 0), 1);
+
+  if (clamped <= SCRUB_END) {
+    autoAdvanced = false;
+  }
+
+  if (clamped <= ROLES_END) {
+    // ---- Phase 1: role text cycles, photo fully visible, video hidden ----
+    const rolesT = ROLES_END > 0 ? clamped / ROLES_END : 0;
+    const next = Math.min(ROLES.length - 1, Math.floor(rolesT * ROLES.length));
+
+    heroTextBlock.style.opacity = '1';
+    heroPhotoBlock.style.opacity = '1';
+    heroPhotoBlock.style.transform = 'translate(-50%, 0)';
+    heroAuroraBlock.style.opacity = '1';
+    heroAuroraBlock.style.transform = 'translateY(0)';
+    revealFrameWrap.style.opacity = '0';
+    scenePin.style.backgroundColor = lerpColor(HERO_BG_RGB, HERO_BG_RGB, 0); // hero tone
+
+    if (next !== currentIndex) {
+      currentIndex = next;
+      dynamicText.textContent = ROLES[currentIndex];
+      dynamicText.classList.remove('animate');
+      void dynamicText.offsetWidth; // restart animation
+      dynamicText.classList.add('animate');
+      hint.style.opacity = currentIndex === 0 ? '1' : '0';
+    }
+  } else if (clamped <= FADEOUT_END) {
+    // ---- Phase 2: only the text fades away. The photo stays fully visible,
+    // exactly where it is, right up until the swap instant below — it never
+    // dissolves. Freeze the anchor rect here so it can't drift after this. ----
+    const t = smoothstep((clamped - ROLES_END) / (FADEOUT_END - ROLES_END));
+
+    heroTextBlock.style.opacity = String(1 - t);
+    heroPhotoBlock.style.opacity = '1';
+    heroPhotoBlock.style.transform = 'translate(-50%, 0)';
+    heroAuroraBlock.style.opacity = String(1 - t);
+    heroAuroraBlock.style.transform = 'translateY(0)';
+    revealFrameWrap.style.opacity = '0';
+    scenePin.style.backgroundColor = lerpColor(HERO_BG_RGB, HERO_BG_RGB, 0); // hero tone
+  } else if (clamped <= CROSSFADE_END) {
+    // ---- Phase 3: the photo is swapped for the video in a single instant —
+    // no fade, no dissolve. Both are pinned to the EXACT pixel box the photo
+    // occupied (anchorRect) at the moment of the swap, so the cut is
+    // invisible: same spot, same size, just a different image underneath.
+    // From there the crop box grows toward its end size. ----
+    const t = smoothstep((clamped - FADEOUT_END) / (CROSSFADE_END - FADEOUT_END));
+
+    if (lastFrame !== 1) {
+      lastFrame = 1;
+      frameImg.src = frameSrc(1);
+    }
+
+    heroTextBlock.style.opacity = '0';
+    heroPhotoBlock.style.opacity = '0';       // hidden the instant this phase starts
+    heroPhotoBlock.style.transform = 'translate(-50%, 0)';
+    heroAuroraBlock.style.opacity = '0';
+    heroAuroraBlock.style.transform = 'translateY(0)';
+    revealFrameWrap.style.opacity = '1';      // shown the instant this phase starts — no fade-in
+    scenePin.style.backgroundColor = lerpColor(HERO_BG_RGB, VIDEO_BG_RGB, t);
+
+    const start = anchorRect;
+    const end = getEndRect();
+    setCropRect({
+      left: lerp(start.left, end.left, t),
+      top: lerp(start.top, end.top, t),
+      width: lerp(start.width, end.width, t),
+      height: lerp(start.height, end.height, t)
+    });
+    frameImg.style.transform = 'scale(' + CROP_SCALE_START + ')';
+  } else if (clamped <= SCRUB_END) {
+    // ---- Phase 4: video scrubs through the rest of the frames ----
+    heroTextBlock.style.opacity = '0';
+    heroPhotoBlock.style.opacity = '0';
+    heroPhotoBlock.style.transform = 'translate(-50%, 0)';
+    heroAuroraBlock.style.opacity = '0';
+    heroAuroraBlock.style.transform = 'translateY(0)';
+    revealFrameWrap.style.opacity = '1';
+    const scrubT = (clamped - CROSSFADE_END) / (SCRUB_END - CROSSFADE_END);
+    setCropRect(getEndRect());
+
+    frameImg.style.transform = 'scale(' + (CROP_SCALE_START + (CROP_SCALE_END - CROP_SCALE_START) * scrubT) + ')';
+
+    const frameNum = Math.min(STOP_FRAME, Math.max(1, Math.round(scrubT * (STOP_FRAME - 1)) + 1));
+    if (frameNum !== lastFrame) {
+      lastFrame = frameNum;
+      frameImg.src = frameSrc(frameNum);
+    }
+    scenePin.style.backgroundColor = 'rgb(' + VIDEO_BG_RGB.join(', ') + ')';
+  } else {
+    // ---- Phase 5: last frame dissolves into the video background tone ----
+    const t = smoothstep((clamped - SCRUB_END) / (1 - SCRUB_END));
+    heroTextBlock.style.opacity = '0';
+    heroPhotoBlock.style.opacity = '0';
+    heroPhotoBlock.style.transform = 'translate(-50%, 0)';
+    heroAuroraBlock.style.opacity = '0';
+    heroAuroraBlock.style.transform = 'translateY(0)';
+    setCropRect(getEndRect());
+    frameImg.style.transform = 'scale(' + CROP_SCALE_END + ')';
+    revealFrameWrap.style.opacity = String(1 - t);
+    scenePin.style.backgroundColor = 'rgb(' + VIDEO_BG_RGB.join(', ') + ')';
+
+    if (t >= 0.999 && !autoAdvanced) {
+      autoAdvanced = true;
+      discretePhaseActive = false;
+      document.querySelector('.portfolio-section').scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+  }
+}
+
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    ticking = true;
+    requestAnimationFrame(updateScene);
+  }
+}, { passive: true });
+
+window.addEventListener('resize', updateScene);
+updateScene();
+
+/* ---------- Discrete "one scroll = one step" control for the role text ---------- */
+/* Continuous scroll-to-pixel mapping meant different devices needed a
+   different number of wheel notches to advance one role (trackpads send
+   many tiny deltas, mice send fewer larger ones). This intercepts scroll
+   input while the roles are cycling and advances exactly one role per
+   gesture, locking briefly so one swipe/notch can't skip several. Once
+   the last role has been shown, the next scroll jumps straight to the
+   start of the video scrub in one step, then hands control back to the
+   normal continuous scroll used for scrubbing through frames. */
+
+function wrapperTopAbs() {
+  return sceneWrapper.getBoundingClientRect().top + window.scrollY;
+}
+function scrollableRange() {
+  return sceneWrapper.offsetHeight - window.innerHeight;
+}
+function scrollToProgress(p) {
+  const target = wrapperTopAbs() + p * scrollableRange();
+  window.scrollTo({ top: target, behavior: 'auto' });
+}
+// True only while the hero pin is still the section actually being
+// scrolled through — i.e. its sticky box still spans the viewport. Once
+// the user has scrolled past it (however they got there — discrete steps,
+// a fast continuous scroll, or a click elsewhere on the page), this goes
+// false and the discrete-step wheel/touch handlers below stop hijacking
+// scroll input anywhere else on the page.
+function isHeroInScrollRange() {
+  const rect = sceneWrapper.getBoundingClientRect();
+  return rect.top <= 0 && rect.bottom > window.innerHeight * 0.1;
+}
+
+function handleDiscreteStep(dir) {
+  if (dir > 0) {
+    if (roleStep < ROLES.length - 1) {
+      roleStep += 1;
+      scrollToProgress(((roleStep + 0.5) / ROLES.length) * ROLES_END);
+    } else {
+      discretePhaseActive = false;
+      scrollToProgress(CROSSFADE_END);
+      return;
+    }
+  } else {
+    if (roleStep > 0) {
+      roleStep -= 1;
+      scrollToProgress(((roleStep + 0.5) / ROLES.length) * ROLES_END);
+    } else {
+      return;
+    }
+  }
+  stepLocked = true;
+  setTimeout(() => { stepLocked = false; }, STEP_LOCK_MS);
+}
+
+window.addEventListener('wheel', (e) => {
+  if (!discretePhaseActive || e.deltaY === 0) return;
+  if (!isHeroInScrollRange()) { discretePhaseActive = false; return; }
+  e.preventDefault();
+  if (stepLocked) return;
+  handleDiscreteStep(e.deltaY > 0 ? 1 : -1);
+}, { passive: false });
+
+let discreteTouchStartY = null;
+window.addEventListener('touchstart', (e) => {
+  if (!discretePhaseActive) return;
+  if (!isHeroInScrollRange()) { discretePhaseActive = false; return; }
+  discreteTouchStartY = e.touches[0].clientY;
+}, { passive: true });
+window.addEventListener('touchmove', (e) => {
+  if (!discretePhaseActive || discreteTouchStartY === null) return;
+  if (!isHeroInScrollRange()) { discretePhaseActive = false; return; }
+  e.preventDefault();
+}, { passive: false });
+window.addEventListener('touchend', (e) => {
+  if (!discretePhaseActive || discreteTouchStartY === null) return;
+  const deltaY = discreteTouchStartY - e.changedTouches[0].clientY;
+  discreteTouchStartY = null;
+  if (!isHeroInScrollRange()) { discretePhaseActive = false; return; }
+  if (Math.abs(deltaY) < 30 || stepLocked) return;
+  handleDiscreteStep(deltaY > 0 ? 1 : -1);
+}, { passive: true });
+
+} catch (err) {
+  console.error('Scroll-scene setup failed:', err);
+}
+</script>
+
+<script>
+/* ---------- Click-triggered category selection: work preview + background media ---------- */
+/* Kept in its own script tag (separate from the scroll-scene/aurora code
+   above) so that if anything in that unrelated block ever throws, these
+   click handlers still get wired up and the portfolio buttons keep working.
+   Hover on the pill buttons and the Enter button is a pure CSS highlight
+   (handled entirely by :hover rules in <style>) — it doesn't reveal
+   anything. Clicking a category pill toggles its preview thumbnails and
+   the full-bleed background media/title/description/Enter button on.
+   Clicking the same pill again, or clicking elsewhere in the section,
+   closes it. Videos are trimmed to their first 5 seconds on loop; if a
+   category has multiple image works, they crossfade every 5 seconds
+   while active. */
+(function () {
+  const bgMediaRoot = document.getElementById('portfolioBgMedia');
+  const bgVideography = document.getElementById('bgVideoVideography');
+
+  const bgMarketing = document.getElementById('bgVideoMarketing');
+  const bgTitle = document.getElementById('bgMediaTitle');
+  const bgDivider = document.getElementById('bgMediaDivider');
+  const bgDesc = document.getElementById('bgMediaDesc');
+  const bgEnter = document.getElementById('bgMediaEnter');
+  const cameraExplode = document.getElementById('cameraParts');
+  const portfolioHeadingWrap = document.querySelector('.portfolio-heading-wrap');
+  const portfolioButtons = document.querySelector('.portfolio-buttons');
+  const portfolioSection = document.querySelector('.portfolio-section');
+
+  const CATEGORY_LABELS = {
+    'videography': 'Videography',
+    'digital-marketing': 'Content Marketing'
+  };
+
+  const CATEGORY_DESCRIPTIONS = {
+    'videography': '<em>Cinematic</em> <strong>brand films</strong>, social content, and promotional edits, shot, graded, and cut for <span class="tag-chip">Impact</span>.',
+
+    'digital-marketing': '<em>Data-driven</em> social and search campaigns that turn attention into <span class="tag-chip">Measurable Growth</span>.'
+  };
+
+  const layers = {
+    'videography': bgVideography,
+    'digital-marketing': bgMarketing
+  };
+
+  const PREVIEW_WINDOW = 5; // seconds
+
+  const wraps = [...document.querySelectorAll('.portfolio-btn-wrap')];
+  let activeWrap = null;
+
+  function onVideoTimeUpdate(e) {
+    const v = e.target;
+    if (v.currentTime >= PREVIEW_WINDOW) {
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    }
+  }
+
+  function startWrapPreview(wrap) {
+    const thumbs = [...wrap.querySelectorAll('.work-thumb')];
+    const videos = thumbs.map(t => t.querySelector('video')).filter(Boolean);
+    const images = thumbs.map(t => t.querySelector('img')).filter(Boolean);
+
+    videos.forEach((v) => {
+      v.classList.add('is-showing');
+      v.currentTime = 0;
+      v.addEventListener('timeupdate', onVideoTimeUpdate);
+      v.play().catch(() => {});
+    });
+
+    if (images.length) {
+      let imageIndex = 0;
+      images.forEach((img, idx) => img.classList.toggle('is-showing', idx === imageIndex));
+      if (images.length > 1) {
+        wrap._imageRotateTimer = setInterval(() => {
+          imageIndex = (imageIndex + 1) % images.length;
+          images.forEach((img, idx) => img.classList.toggle('is-showing', idx === imageIndex));
+        }, PREVIEW_WINDOW * 1000);
+      }
+    }
+  }
+
+  function stopWrapPreview(wrap) {
+    const thumbs = [...wrap.querySelectorAll('.work-thumb')];
+    const videos = thumbs.map(t => t.querySelector('video')).filter(Boolean);
+    const images = thumbs.map(t => t.querySelector('img')).filter(Boolean);
+
+    videos.forEach((v) => {
+      v.removeEventListener('timeupdate', onVideoTimeUpdate);
+      v.pause();
+      v.currentTime = 0;
+      v.classList.remove('is-showing');
+    });
+
+    if (wrap._imageRotateTimer) {
+      clearInterval(wrap._imageRotateTimer);
+      wrap._imageRotateTimer = null;
+    }
+    images.forEach(img => img.classList.remove('is-showing'));
+  }
+
+  function deactivateAllLayers() {
+    Object.values(layers).forEach((el) => {
+      el.classList.remove('is-active');
+      if (el.tagName === 'VIDEO') el.pause();
+    });
+  }
+
+  function activateCategory(wrap) {
+    const category = wrap.dataset.category;
+    const layer = layers[category];
+    if (!layer) return;
+
+    deactivateAllLayers();
+    layer.classList.add('is-active');
+    if (cameraExplode) cameraExplode.classList.add('is-dimmed');
+    if (portfolioButtons) portfolioButtons.classList.add('is-browsing');
+    if (portfolioHeadingWrap) portfolioHeadingWrap.classList.add('is-hidden');
+    if (bgMediaRoot) bgMediaRoot.setAttribute('data-category', category);
+    if (portfolioSection) portfolioSection.setAttribute('data-category', category);
+    bgTitle.textContent = CATEGORY_LABELS[category] || '';
+    bgTitle.classList.add('is-active');
+    bgDivider.classList.add('is-active');
+    bgDesc.innerHTML = CATEGORY_DESCRIPTIONS[category] || '';
+    bgDesc.classList.add('is-active');
+    if (bgEnter) {
+      bgEnter.dataset.category = category;
+      bgEnter.classList.add('is-active');
+    }
+    if (layer.tagName === 'VIDEO') {
+      layer.currentTime = 0;
+      layer.play().catch(() => {});
+    }
+
+    wrap.classList.add('is-active', 'is-selected');
+    startWrapPreview(wrap);
+  }
+
+  function deactivateCategory(wrap) {
+    const category = wrap.dataset.category;
+    const layer = layers[category];
+
+    wrap.classList.remove('is-active', 'is-selected');
+    stopWrapPreview(wrap);
+
+    if (layer) {
+      layer.classList.remove('is-active');
+      if (layer.tagName === 'VIDEO') layer.pause();
+    }
+    if (cameraExplode) cameraExplode.classList.remove('is-dimmed');
+    if (portfolioButtons) portfolioButtons.classList.remove('is-browsing');
+    if (portfolioHeadingWrap) portfolioHeadingWrap.classList.remove('is-hidden');
+    if (portfolioSection) portfolioSection.removeAttribute('data-category');
+    bgTitle.classList.remove('is-active');
+    bgDivider.classList.remove('is-active');
+    bgDesc.classList.remove('is-active');
+    if (bgEnter) bgEnter.classList.remove('is-active');
+  }
+
+  wraps.forEach((wrap) => {
+    const btn = wrap.querySelector('.portfolio-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      if (activeWrap === wrap) {
+        deactivateCategory(wrap);
+        activeWrap = null;
+      } else {
+        if (activeWrap) deactivateCategory(activeWrap);
+        activateCategory(wrap);
+        activeWrap = wrap;
+      }
+    });
+  });
+
+  // Clicking anywhere else in the portfolio section (but not on a pill or
+  // the Enter button) closes whichever category is currently open.
+  if (portfolioSection) {
+    portfolioSection.addEventListener('click', (e) => {
+      if (!activeWrap) return;
+      if (e.target.closest('.portfolio-btn-wrap') || e.target.closest('.bg-media-enter')) return;
+      deactivateCategory(activeWrap);
+      activeWrap = null;
+    });
+  }
+
+  // Clicking "Enter" jumps straight to the full-screen works view for
+  // whichever category is currently selected.
+  if (bgEnter) {
+    bgEnter.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const category = bgEnter.dataset.category;
+      if (category && typeof window.openWorksView === 'function') {
+        window.openWorksView(category);
+      }
+    });
+  }
+})();
+</script>
+
+<script>
+/* =========================================================================
+   InfiniteMenu — vanilla JS / WebGL2 port (no React, no build step)
+   Ported from the InfiniteMenu.tsx component. Same geometry/shader/control
+   logic; only the React wrapper has been swapped for plain DOM binding.
+   Requires gl-matrix (loaded via CDN as the global `glMatrix`).
+   ========================================================================= */
+(function () {
+  if (typeof glMatrix === 'undefined') {
+    console.error('InfiniteMenu: gl-matrix failed to load, skipping gallery init.');
+    return;
+  }
+  const { mat4, quat, vec2, vec3 } = glMatrix;
+
+  const discVertShaderSource = `#version 300 es
+
+uniform mat4 uWorldMatrix;
+uniform mat4 uViewMatrix;
+uniform mat4 uProjectionMatrix;
+uniform vec3 uCameraPosition;
+uniform vec4 uRotationAxisVelocity;
+
+in vec3 aModelPosition;
+in vec3 aModelNormal;
+in vec2 aModelUvs;
+in mat4 aInstanceMatrix;
+
+out vec2 vUvs;
+out float vAlpha;
+flat out int vInstanceId;
+
+#define PI 3.141593
+
+void main() {
+    vec4 worldPosition = uWorldMatrix * aInstanceMatrix * vec4(aModelPosition, 1.);
+
+    vec3 centerPos = (uWorldMatrix * aInstanceMatrix * vec4(0., 0., 0., 1.)).xyz;
+    float radius = length(centerPos.xyz);
+
+    if (gl_VertexID > 0) {
+        vec3 rotationAxis = uRotationAxisVelocity.xyz;
+        float rotationVelocity = min(.15, uRotationAxisVelocity.w * 15.);
+        vec3 stretchDir = normalize(cross(centerPos, rotationAxis));
+        vec3 relativeVertexPos = normalize(worldPosition.xyz - centerPos);
+        float strength = dot(stretchDir, relativeVertexPos);
+        float invAbsStrength = min(0., abs(strength) - 1.);
+        strength = rotationVelocity * sign(strength) * abs(invAbsStrength * invAbsStrength * invAbsStrength + 1.);
+        worldPosition.xyz += stretchDir * strength;
+    }
+
+    worldPosition.xyz = radius * normalize(worldPosition.xyz);
+
+    gl_Position = uProjectionMatrix * uViewMatrix * worldPosition;
+
+    vAlpha = smoothstep(0.5, 1., normalize(worldPosition.xyz).z) * .9 + .1;
+    vUvs = aModelUvs;
+    vInstanceId = gl_InstanceID;
+}
+`;
+
+  const discFragShaderSource = `#version 300 es
+precision highp float;
+
+uniform sampler2D uTex;
+uniform int uItemCount;
+uniform int uAtlasSize;
+
+out vec4 outColor;
+
+in vec2 vUvs;
+in float vAlpha;
+flat in int vInstanceId;
+
+void main() {
+    int itemIndex = vInstanceId % uItemCount;
+    int cellsPerRow = uAtlasSize;
+    int cellX = itemIndex % cellsPerRow;
+    int cellY = itemIndex / cellsPerRow;
+    vec2 cellSize = vec2(1.0) / vec2(float(cellsPerRow));
+    vec2 cellOffset = vec2(float(cellX), float(cellY)) * cellSize;
+
+    ivec2 texSize = textureSize(uTex, 0);
+    float imageAspect = float(texSize.x) / float(texSize.y);
+    float containerAspect = 1.0;
+
+    float scale = max(imageAspect / containerAspect,
+                     containerAspect / imageAspect);
+
+    vec2 st = vec2(vUvs.x, 1.0 - vUvs.y);
+    st = (st - 0.5) * scale + 0.5;
+
+    st = clamp(st, 0.0, 1.0);
+
+    st = st * cellSize + cellOffset;
+
+    outColor = texture(uTex, st);
+    outColor.a *= vAlpha;
+}
+`;
+
+  class Face {
+    constructor(a, b, c) {
+      this.a = a; this.b = b; this.c = c;
+    }
+  }
+
+  class Vertex {
+    constructor(x, y, z) {
+      this.position = vec3.fromValues(x, y, z);
+      this.normal = vec3.create();
+      this.uv = vec2.create();
+    }
+  }
+
+  class Geometry {
+    constructor() {
+      this.vertices = [];
+      this.faces = [];
+    }
+
+    addVertex(...args) {
+      for (let i = 0; i < args.length; i += 3) {
+        this.vertices.push(new Vertex(args[i], args[i + 1], args[i + 2]));
+      }
+      return this;
+    }
+
+    addFace(...args) {
+      for (let i = 0; i < args.length; i += 3) {
+        this.faces.push(new Face(args[i], args[i + 1], args[i + 2]));
+      }
+      return this;
+    }
+
+    get lastVertex() {
+      return this.vertices[this.vertices.length - 1];
+    }
+
+    subdivide(divisions = 1) {
+      const midPointCache = {};
+      let f = this.faces;
+
+      for (let div = 0; div < divisions; ++div) {
+        const newFaces = new Array(f.length * 4);
+
+        f.forEach((face, ndx) => {
+          const mAB = this.getMidPoint(face.a, face.b, midPointCache);
+          const mBC = this.getMidPoint(face.b, face.c, midPointCache);
+          const mCA = this.getMidPoint(face.c, face.a, midPointCache);
+
+          const i = ndx * 4;
+          newFaces[i + 0] = new Face(face.a, mAB, mCA);
+          newFaces[i + 1] = new Face(face.b, mBC, mAB);
+          newFaces[i + 2] = new Face(face.c, mCA, mBC);
+          newFaces[i + 3] = new Face(mAB, mBC, mCA);
+        });
+
+        f = newFaces;
+      }
+
+      this.faces = f;
+      return this;
+    }
+
+    spherize(radius = 1) {
+      this.vertices.forEach(vertex => {
+        vec3.normalize(vertex.normal, vertex.position);
+        vec3.scale(vertex.position, vertex.normal, radius);
+      });
+      return this;
+    }
+
+    get data() {
+      return {
+        vertices: this.vertexData,
+        indices: this.indexData,
+        normals: this.normalData,
+        uvs: this.uvData
+      };
+    }
+
+    get vertexData() {
+      return new Float32Array(this.vertices.flatMap(v => Array.from(v.position)));
+    }
+
+    get normalData() {
+      return new Float32Array(this.vertices.flatMap(v => Array.from(v.normal)));
+    }
+
+    get uvData() {
+      return new Float32Array(this.vertices.flatMap(v => Array.from(v.uv)));
+    }
+
+    get indexData() {
+      return new Uint16Array(this.faces.flatMap(f => [f.a, f.b, f.c]));
+    }
+
+    getMidPoint(ndxA, ndxB, cache) {
+      const cacheKey = ndxA < ndxB ? `k_${ndxB}_${ndxA}` : `k_${ndxA}_${ndxB}`;
+      if (Object.prototype.hasOwnProperty.call(cache, cacheKey)) {
+        return cache[cacheKey];
+      }
+      const a = this.vertices[ndxA].position;
+      const b = this.vertices[ndxB].position;
+      const ndx = this.vertices.length;
+      cache[cacheKey] = ndx;
+      this.addVertex((a[0] + b[0]) * 0.5, (a[1] + b[1]) * 0.5, (a[2] + b[2]) * 0.5);
+      return ndx;
+    }
+  }
+
+  class IcosahedronGeometry extends Geometry {
+    constructor() {
+      super();
+      const t = Math.sqrt(5) * 0.5 + 0.5;
+      this.addVertex(
+        -1, t, 0, 1, t, 0, -1, -t, 0, 1, -t, 0,
+        0, -1, t, 0, 1, t, 0, -1, -t, 0, 1, -t,
+        t, 0, -1, t, 0, 1, -t, 0, -1, -t, 0, 1
+      ).addFace(
+        0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
+        1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
+        3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
+        4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1
+      );
+    }
+  }
+
+  class DiscGeometry extends Geometry {
+    constructor(steps = 4, radius = 1) {
+      super();
+      const safeSteps = Math.max(4, steps);
+      const alpha = (2 * Math.PI) / safeSteps;
+
+      this.addVertex(0, 0, 0);
+      this.lastVertex.uv[0] = 0.5;
+      this.lastVertex.uv[1] = 0.5;
+
+      for (let i = 0; i < safeSteps; ++i) {
+        const x = Math.cos(alpha * i);
+        const y = Math.sin(alpha * i);
+        this.addVertex(radius * x, radius * y, 0);
+        this.lastVertex.uv[0] = x * 0.5 + 0.5;
+        this.lastVertex.uv[1] = y * 0.5 + 0.5;
+
+        if (i > 0) {
+          this.addFace(0, i, i + 1);
+        }
+      }
+      this.addFace(0, safeSteps, 1);
+    }
+  }
+
+  function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    if (!shader) return null;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) return shader;
+    console.error(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
+  }
+
+  function createProgram(gl, shaderSources, transformFeedbackVaryings, attribLocations) {
+    const program = gl.createProgram();
+    if (!program) return null;
+
+    [gl.VERTEX_SHADER, gl.FRAGMENT_SHADER].forEach((type, ndx) => {
+      const shader = createShader(gl, type, shaderSources[ndx]);
+      if (shader) gl.attachShader(program, shader);
+    });
+
+    if (transformFeedbackVaryings) {
+      gl.transformFeedbackVaryings(program, transformFeedbackVaryings, gl.SEPARATE_ATTRIBS);
+    }
+
+    if (attribLocations) {
+      for (const attrib in attribLocations) {
+        if (Object.prototype.hasOwnProperty.call(attribLocations, attrib)) {
+          gl.bindAttribLocation(program, attribLocations[attrib], attrib);
+        }
+      }
+    }
+
+    gl.linkProgram(program);
+    const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) return program;
+    console.error(gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    return null;
+  }
+
+  function makeVertexArray(gl, bufLocNumElmPairs, indices) {
+    const va = gl.createVertexArray();
+    if (!va) return null;
+
+    gl.bindVertexArray(va);
+
+    for (const [buffer, loc, numElem] of bufLocNumElmPairs) {
+      if (loc === -1) continue;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, numElem, gl.FLOAT, false, 0, 0);
+    }
+
+    if (indices) {
+      const indexBuffer = gl.createBuffer();
+      if (indexBuffer) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+      }
+    }
+
+    gl.bindVertexArray(null);
+    return va;
+  }
+
+  function resizeCanvasToDisplaySize(canvas) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const displayWidth = Math.round(canvas.clientWidth * dpr);
+    const displayHeight = Math.round(canvas.clientHeight * dpr);
+    const needResize = canvas.width !== displayWidth || canvas.height !== displayHeight;
+    if (needResize) {
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
+    }
+    return needResize;
+  }
+
+  function makeBuffer(gl, sizeOrData, usage) {
+    const buf = gl.createBuffer();
+    if (!buf) throw new Error('Failed to create WebGL buffer.');
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, sizeOrData, usage);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    return buf;
+  }
+
+  function createAndSetupTexture(gl, minFilter, magFilter, wrapS, wrapT) {
+    const texture = gl.createTexture();
+    if (!texture) throw new Error('Failed to create WebGL texture.');
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapS);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
+    return texture;
+  }
+
+  class ArcballControl {
+    constructor(canvas, updateCallback) {
+      this.canvas = canvas;
+      this.updateCallback = updateCallback || (() => undefined);
+
+      this.isPointerDown = false;
+      this.orientation = quat.create();
+      this.pointerRotation = quat.create();
+      this.rotationVelocity = 0;
+      this.rotationAxis = vec3.fromValues(1, 0, 0);
+
+      this.snapDirection = vec3.fromValues(0, 0, -1);
+      this.snapTargetDirection = null;
+
+      this.pointerPos = vec2.create();
+      this.previousPointerPos = vec2.create();
+      this._rotationVelocity = 0;
+      this._combinedQuat = quat.create();
+
+      this.EPSILON = 0.1;
+      this.IDENTITY_QUAT = quat.create();
+
+      canvas.addEventListener('pointerdown', (e) => {
+        vec2.set(this.pointerPos, e.clientX, e.clientY);
+        vec2.copy(this.previousPointerPos, this.pointerPos);
+        this.isPointerDown = true;
+      });
+      canvas.addEventListener('pointerup', () => { this.isPointerDown = false; });
+      canvas.addEventListener('pointerleave', () => { this.isPointerDown = false; });
+      canvas.addEventListener('pointermove', (e) => {
+        if (this.isPointerDown) vec2.set(this.pointerPos, e.clientX, e.clientY);
+      });
+
+      canvas.style.touchAction = 'none';
+    }
+
+    update(deltaTime, targetFrameDuration = 16) {
+      const timeScale = deltaTime / targetFrameDuration + 0.00001;
+      let angleFactor = timeScale;
+      const snapRotation = quat.create();
+
+      if (this.isPointerDown) {
+        const INTENSITY = 0.3 * timeScale;
+        const ANGLE_AMPLIFICATION = 5 / timeScale;
+
+        const midPointerPos = vec2.sub(vec2.create(), this.pointerPos, this.previousPointerPos);
+        vec2.scale(midPointerPos, midPointerPos, INTENSITY);
+
+        if (vec2.sqrLen(midPointerPos) > this.EPSILON) {
+          vec2.add(midPointerPos, this.previousPointerPos, midPointerPos);
+
+          const p = this.project(midPointerPos);
+          const q = this.project(this.previousPointerPos);
+          const a = vec3.normalize(vec3.create(), p);
+          const b = vec3.normalize(vec3.create(), q);
+
+          vec2.copy(this.previousPointerPos, midPointerPos);
+
+          angleFactor *= ANGLE_AMPLIFICATION;
+
+          this.quatFromVectors(a, b, this.pointerRotation, angleFactor);
+        } else {
+          quat.slerp(this.pointerRotation, this.pointerRotation, this.IDENTITY_QUAT, INTENSITY);
+        }
+      } else {
+        const INTENSITY = 0.1 * timeScale;
+        quat.slerp(this.pointerRotation, this.pointerRotation, this.IDENTITY_QUAT, INTENSITY);
+
+        if (this.snapTargetDirection) {
+          const SNAPPING_INTENSITY = 0.2;
+          const a = this.snapTargetDirection;
+          const b = this.snapDirection;
+          const sqrDist = vec3.squaredDistance(a, b);
+          const distanceFactor = Math.max(0.1, 1 - sqrDist * 10);
+          angleFactor *= SNAPPING_INTENSITY * distanceFactor;
+          this.quatFromVectors(a, b, snapRotation, angleFactor);
+        }
+      }
+
+      const combinedQuat = quat.multiply(quat.create(), snapRotation, this.pointerRotation);
+      this.orientation = quat.multiply(quat.create(), combinedQuat, this.orientation);
+      quat.normalize(this.orientation, this.orientation);
+
+      const RA_INTENSITY = 0.8 * timeScale;
+      quat.slerp(this._combinedQuat, this._combinedQuat, combinedQuat, RA_INTENSITY);
+      quat.normalize(this._combinedQuat, this._combinedQuat);
+
+      const rad = Math.acos(this._combinedQuat[3]) * 2.0;
+      const s = Math.sin(rad / 2.0);
+      let rv = 0;
+      if (s > 0.000001) {
+        rv = rad / (2 * Math.PI);
+        this.rotationAxis[0] = this._combinedQuat[0] / s;
+        this.rotationAxis[1] = this._combinedQuat[1] / s;
+        this.rotationAxis[2] = this._combinedQuat[2] / s;
+      }
+
+      const RV_INTENSITY = 0.5 * timeScale;
+      this._rotationVelocity += (rv - this._rotationVelocity) * RV_INTENSITY;
+      this.rotationVelocity = this._rotationVelocity / timeScale;
+
+      this.updateCallback(deltaTime);
+    }
+
+    quatFromVectors(a, b, out, angleFactor = 1) {
+      const axis = vec3.cross(vec3.create(), a, b);
+      vec3.normalize(axis, axis);
+      const d = Math.max(-1, Math.min(1, vec3.dot(a, b)));
+      const angle = Math.acos(d) * angleFactor;
+      quat.setAxisAngle(out, axis, angle);
+      return { q: out, axis, angle };
+    }
+
+    project(pos) {
+      const r = 2;
+      const w = this.canvas.clientWidth;
+      const h = this.canvas.clientHeight;
+      const s = Math.max(w, h) - 1;
+
+      const x = (2 * pos[0] - w - 1) / s;
+      const y = (2 * pos[1] - h - 1) / s;
+      let z = 0;
+      const xySq = x * x + y * y;
+      const rSq = r * r;
+
+      if (xySq <= rSq / 2.0) {
+        z = Math.sqrt(rSq - xySq);
+      } else {
+        z = rSq / Math.sqrt(xySq);
+      }
+      return vec3.fromValues(-x, y, z);
+    }
+  }
+
+  class InfiniteGridMenu {
+    constructor(canvas, items, onActiveItemChange, onMovementChange, onInit, scale = 1.0) {
+      this.canvas = canvas;
+      this.items = items;
+      this.onActiveItemChange = onActiveItemChange;
+      this.onMovementChange = onMovementChange;
+
+      this.gl = null;
+      this.discProgram = null;
+      this.discVAO = null;
+      this.worldMatrix = mat4.create();
+      this.tex = null;
+
+      this.viewportSize = vec2.create();
+      this.drawBufferSize = vec2.create();
+
+      this.instancePositions = [];
+      this.DISC_INSTANCE_COUNT = 0;
+      this.atlasSize = 1;
+
+      this._time = 0;
+      this._deltaTime = 0;
+      this._deltaFrames = 0;
+      this._frames = 0;
+
+      this.movementActive = false;
+
+      this.TARGET_FRAME_DURATION = 1000 / 60;
+      this.SPHERE_RADIUS = 2;
+
+      this.camera = {
+        matrix: mat4.create(),
+        near: 0.1,
+        far: 40,
+        fov: Math.PI / 4,
+        aspect: 1,
+        position: vec3.fromValues(0, 0, 3),
+        up: vec3.fromValues(0, 1, 0),
+        matrices: {
+          view: mat4.create(),
+          projection: mat4.create(),
+          inversProjection: mat4.create()
+        }
+      };
+
+      this.smoothRotationVelocity = 0;
+      this.scaleFactor = scale;
+      this.camera.position[2] = 3 * scale;
+
+      this.init(onInit);
+    }
+
+    resize() {
+      const needsResize = resizeCanvasToDisplaySize(this.canvas);
+      if (!this.gl) return;
+      if (needsResize) {
+        this.gl.viewport(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
+      }
+      this.updateProjectionMatrix();
+    }
+
+    run(time = 0) {
+      this._deltaTime = Math.min(32, time - this._time);
+      this._time = time;
+      this._deltaFrames = this._deltaTime / this.TARGET_FRAME_DURATION;
+      this._frames += this._deltaFrames;
+
+      this.animate(this._deltaTime);
+      this.render();
+
+      requestAnimationFrame(t => this.run(t));
+    }
+
+    init(onInit) {
+      const gl = this.canvas.getContext('webgl2', { antialias: true, alpha: true });
+      if (!gl) throw new Error('No WebGL 2 context!');
+      this.gl = gl;
+
+      vec2.set(this.viewportSize, this.canvas.clientWidth, this.canvas.clientHeight);
+      vec2.clone(this.drawBufferSize);
+
+      this.discProgram = createProgram(gl, [discVertShaderSource, discFragShaderSource], null, {
+        aModelPosition: 0,
+        aModelNormal: 1,
+        aModelUvs: 2,
+        aInstanceMatrix: 3
+      });
+
+      this.discLocations = {
+        aModelPosition: gl.getAttribLocation(this.discProgram, 'aModelPosition'),
+        aModelUvs: gl.getAttribLocation(this.discProgram, 'aModelUvs'),
+        aInstanceMatrix: gl.getAttribLocation(this.discProgram, 'aInstanceMatrix'),
+        uWorldMatrix: gl.getUniformLocation(this.discProgram, 'uWorldMatrix'),
+        uViewMatrix: gl.getUniformLocation(this.discProgram, 'uViewMatrix'),
+        uProjectionMatrix: gl.getUniformLocation(this.discProgram, 'uProjectionMatrix'),
+        uCameraPosition: gl.getUniformLocation(this.discProgram, 'uCameraPosition'),
+        uScaleFactor: gl.getUniformLocation(this.discProgram, 'uScaleFactor'),
+        uRotationAxisVelocity: gl.getUniformLocation(this.discProgram, 'uRotationAxisVelocity'),
+        uTex: gl.getUniformLocation(this.discProgram, 'uTex'),
+        uFrames: gl.getUniformLocation(this.discProgram, 'uFrames'),
+        uItemCount: gl.getUniformLocation(this.discProgram, 'uItemCount'),
+        uAtlasSize: gl.getUniformLocation(this.discProgram, 'uAtlasSize')
+      };
+
+      this.discGeo = new DiscGeometry(56, 1);
+      this.discBuffers = this.discGeo.data;
+      this.discVAO = makeVertexArray(
+        gl,
+        [
+          [makeBuffer(gl, this.discBuffers.vertices, gl.STATIC_DRAW), this.discLocations.aModelPosition, 3],
+          [makeBuffer(gl, this.discBuffers.uvs, gl.STATIC_DRAW), this.discLocations.aModelUvs, 2]
+        ],
+        this.discBuffers.indices
+      );
+
+      this.icoGeo = new IcosahedronGeometry();
+      this.icoGeo.subdivide(1).spherize(this.SPHERE_RADIUS);
+      this.instancePositions = this.icoGeo.vertices.map(v => v.position);
+      this.DISC_INSTANCE_COUNT = this.icoGeo.vertices.length;
+      this.initDiscInstances(this.DISC_INSTANCE_COUNT);
+      this.initTexture();
+
+      this.control = new ArcballControl(this.canvas, deltaTime => this.onControlUpdate(deltaTime));
+
+      this.updateCameraMatrix();
+      this.updateProjectionMatrix();
+
+      this.resize();
+
+      if (onInit) onInit(this);
+    }
+
+    initTexture() {
+      if (!this.gl) return;
+      const gl = this.gl;
+      this.tex = createAndSetupTexture(gl, gl.LINEAR, gl.LINEAR, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE);
+
+      const itemCount = Math.max(1, this.items.length);
+      this.atlasSize = Math.ceil(Math.sqrt(itemCount));
+      const cellSize = 512;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = this.atlasSize * cellSize;
+      canvas.height = this.atlasSize * cellSize;
+
+      Promise.all(
+        this.items.map(item => new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(img);
+          img.src = item.image;
+        }))
+      ).then(images => {
+        images.forEach((img, i) => {
+          const x = (i % this.atlasSize) * cellSize;
+          const y = Math.floor(i / this.atlasSize) * cellSize;
+
+          // Fill the cell with black first, so any leftover space around an
+          // image that doesn't perfectly fill the square shows as a clean
+          // black background instead of stretching the photo to fit.
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(x, y, cellSize, cellSize);
+
+          if (img.complete && img.naturalWidth > 0) {
+            // Contain-fit: preserve the image's own aspect ratio rather than
+            // stretching/cropping it to fill the square cell.
+            const scale = Math.min(cellSize / img.naturalWidth, cellSize / img.naturalHeight);
+            const drawW = img.naturalWidth * scale;
+            const drawH = img.naturalHeight * scale;
+            const dx = x + (cellSize - drawW) / 2;
+            const dy = y + (cellSize - drawH) / 2;
+            ctx.drawImage(img, dx, dy, drawW, drawH);
+          }
+
+          // Black circular border, matching the round disc shape each cell
+          // is actually rendered on (square corners of the cell fall outside
+          // the disc and are never seen, so the border needs to be a circle
+          // to read as a frame on the sphere itself).
+          const cx = x + cellSize / 2;
+          const cy = y + cellSize / 2;
+          const radius = cellSize / 2 - 6;
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+          ctx.lineWidth = 16;
+          ctx.strokeStyle = '#000000';
+          ctx.stroke();
+        });
+
+        gl.bindTexture(gl.TEXTURE_2D, this.tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+        gl.generateMipmap(gl.TEXTURE_2D);
+      });
+    }
+
+    initDiscInstances(count) {
+      if (!this.gl || !this.discVAO) return;
+      const gl = this.gl;
+
+      const matricesArray = new Float32Array(count * 16);
+      const matrices = [];
+      for (let i = 0; i < count; ++i) {
+        const instanceMatrixArray = new Float32Array(matricesArray.buffer, i * 16 * 4, 16);
+        mat4.identity(instanceMatrixArray);
+        matrices.push(instanceMatrixArray);
+      }
+
+      this.discInstances = {
+        matricesArray,
+        matrices,
+        buffer: gl.createBuffer()
+      };
+
+      gl.bindVertexArray(this.discVAO);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.discInstances.buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, this.discInstances.matricesArray.byteLength, gl.DYNAMIC_DRAW);
+
+      const mat4AttribSlotCount = 4;
+      const bytesPerMatrix = 16 * 4;
+      for (let j = 0; j < mat4AttribSlotCount; ++j) {
+        const loc = this.discLocations.aInstanceMatrix + j;
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, bytesPerMatrix, j * 4 * 4);
+        gl.vertexAttribDivisor(loc, 1);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      gl.bindVertexArray(null);
+    }
+
+    animate(deltaTime) {
+      if (!this.gl) return;
+      this.control.update(deltaTime, this.TARGET_FRAME_DURATION);
+
+      const positions = this.instancePositions.map(p => vec3.transformQuat(vec3.create(), p, this.control.orientation));
+      const scale = 0.25;
+      const SCALE_INTENSITY = 0.6;
+
+      positions.forEach((p, ndx) => {
+        const s = (Math.abs(p[2]) / this.SPHERE_RADIUS) * SCALE_INTENSITY + (1 - SCALE_INTENSITY);
+        const finalScale = s * scale;
+        const matrix = mat4.create();
+
+        mat4.multiply(matrix, matrix, mat4.fromTranslation(mat4.create(), vec3.negate(vec3.create(), p)));
+        mat4.multiply(matrix, matrix, mat4.targetTo(mat4.create(), [0, 0, 0], p, [0, 1, 0]));
+        mat4.multiply(matrix, matrix, mat4.fromScaling(mat4.create(), [finalScale, finalScale, finalScale]));
+        mat4.multiply(matrix, matrix, mat4.fromTranslation(mat4.create(), [0, 0, -this.SPHERE_RADIUS]));
+
+        mat4.copy(this.discInstances.matrices[ndx], matrix);
+      });
+
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.discInstances.buffer);
+      this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.discInstances.matricesArray);
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+
+      this.smoothRotationVelocity = this.control.rotationVelocity;
+    }
+
+    render() {
+      if (!this.gl || !this.discProgram) return;
+      const gl = this.gl;
+
+      gl.useProgram(this.discProgram);
+      gl.enable(gl.CULL_FACE);
+      gl.enable(gl.DEPTH_TEST);
+
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      gl.uniformMatrix4fv(this.discLocations.uWorldMatrix, false, this.worldMatrix);
+      gl.uniformMatrix4fv(this.discLocations.uViewMatrix, false, this.camera.matrices.view);
+      gl.uniformMatrix4fv(this.discLocations.uProjectionMatrix, false, this.camera.matrices.projection);
+      gl.uniform3f(
+        this.discLocations.uCameraPosition,
+        this.camera.position[0],
+        this.camera.position[1],
+        this.camera.position[2]
+      );
+      gl.uniform4f(
+        this.discLocations.uRotationAxisVelocity,
+        this.control.rotationAxis[0],
+        this.control.rotationAxis[1],
+        this.control.rotationAxis[2],
+        this.smoothRotationVelocity * 1.1
+      );
+
+      gl.uniform1i(this.discLocations.uItemCount, this.items.length);
+      gl.uniform1i(this.discLocations.uAtlasSize, this.atlasSize);
+
+      gl.uniform1f(this.discLocations.uFrames, this._frames);
+      gl.uniform1f(this.discLocations.uScaleFactor, this.scaleFactor);
+
+      gl.uniform1i(this.discLocations.uTex, 0);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.tex);
+
+      gl.bindVertexArray(this.discVAO);
+      gl.drawElementsInstanced(
+        gl.TRIANGLES,
+        this.discBuffers.indices.length,
+        gl.UNSIGNED_SHORT,
+        0,
+        this.DISC_INSTANCE_COUNT
+      );
+      gl.bindVertexArray(null);
+    }
+
+    updateCameraMatrix() {
+      mat4.targetTo(this.camera.matrix, this.camera.position, [0, 0, 0], this.camera.up);
+      mat4.invert(this.camera.matrices.view, this.camera.matrix);
+    }
+
+    updateProjectionMatrix() {
+      if (!this.gl) return;
+      const canvasEl = this.gl.canvas;
+      this.camera.aspect = canvasEl.clientWidth / canvasEl.clientHeight;
+      const height = this.SPHERE_RADIUS * 0.35;
+      const distance = this.camera.position[2];
+      if (this.camera.aspect > 1) {
+        this.camera.fov = 2 * Math.atan(height / distance);
+      } else {
+        this.camera.fov = 2 * Math.atan(height / this.camera.aspect / distance);
+      }
+      mat4.perspective(
+        this.camera.matrices.projection,
+        this.camera.fov,
+        this.camera.aspect,
+        this.camera.near,
+        this.camera.far
+      );
+      mat4.invert(this.camera.matrices.inversProjection, this.camera.matrices.projection);
+    }
+
+    onControlUpdate(deltaTime) {
+      const timeScale = deltaTime / this.TARGET_FRAME_DURATION + 0.0001;
+      let damping = 5 / timeScale;
+      let cameraTargetZ = 3 * this.scaleFactor;
+
+      const isMoving = this.control.isPointerDown || Math.abs(this.smoothRotationVelocity) > 0.01;
+
+      if (isMoving !== this.movementActive) {
+        this.movementActive = isMoving;
+        this.onMovementChange(isMoving);
+      }
+
+      if (!this.control.isPointerDown) {
+        const nearestVertexIndex = this.findNearestVertexIndex();
+        const itemIndex = nearestVertexIndex % Math.max(1, this.items.length);
+        this.onActiveItemChange(itemIndex);
+        const snapDirection = vec3.normalize(vec3.create(), this.getVertexWorldPosition(nearestVertexIndex));
+        this.control.snapTargetDirection = snapDirection;
+      } else {
+        cameraTargetZ += this.control.rotationVelocity * 80 + 2.5;
+        damping = 7 / timeScale;
+      }
+
+      this.camera.position[2] += (cameraTargetZ - this.camera.position[2]) / damping;
+      this.updateCameraMatrix();
+    }
+
+    findNearestVertexIndex() {
+      const n = this.control.snapDirection;
+      const inversOrientation = quat.conjugate(quat.create(), this.control.orientation);
+      const nt = vec3.transformQuat(vec3.create(), n, inversOrientation);
+
+      let maxD = -1;
+      let nearestVertexIndex = 0;
+      for (let i = 0; i < this.instancePositions.length; ++i) {
+        const d = vec3.dot(nt, this.instancePositions[i]);
+        if (d > maxD) {
+          maxD = d;
+          nearestVertexIndex = i;
+        }
+      }
+      return nearestVertexIndex;
+    }
+
+    getVertexWorldPosition(index) {
+      const nearestVertexPos = this.instancePositions[index];
+      return vec3.transformQuat(vec3.create(), nearestVertexPos, this.control.orientation);
+    }
+  }
+
+  /* ---- Mount into the About section (actual work photos) ---- */
+  const defaultItems = [
+    { image: 'works/gallery-1.jpg', link: '' },
+    { image: 'works/gallery-2.jpg', link: '' },
+    { image: 'works/gallery-3.jpg', link: '' },
+    { image: 'works/gallery-4.jpg', link: '' },
+    { image: 'works/gallery-5.jpg', link: '' },
+    { image: 'works/gallery-6.jpg', link: '' },
+    { image: 'works/gallery-7.jpg', link: '' }
+  ];
+
+  function mountInfiniteMenu(canvas, items, scale, titleEl, buttonEl) {
+    let activeItem = null;
+    let moving = false;
+
+    function refreshUI() {
+      if (!activeItem) return;
+      titleEl.textContent = activeItem.title || '';
+      titleEl.classList.toggle('active', !moving);
+      titleEl.classList.toggle('inactive', moving);
+      buttonEl.classList.toggle('active', !moving);
+      buttonEl.classList.toggle('inactive', moving);
+    }
+
+    const handleActiveItem = (index) => {
+      if (!items.length) return;
+      activeItem = items[index % items.length];
+      refreshUI();
+    };
+    const handleMovementChange = (isMoving) => {
+      moving = isMoving;
+      refreshUI();
+    };
+
+    buttonEl.addEventListener('click', () => {
+      if (!activeItem || !activeItem.link) return;
+      if (activeItem.link.startsWith('http')) window.open(activeItem.link, '_blank');
+    });
+
+    const sketch = new InfiniteGridMenu(
+      canvas,
+      items.length ? items : defaultItems,
+      handleActiveItem,
+      handleMovementChange,
+      sk => sk.run(),
+      scale
+    );
+
+    window.addEventListener('resize', () => sketch.resize());
+    return sketch;
+  }
+
+  const menuCanvas = document.getElementById('infinite-grid-menu-canvas');
+  if (menuCanvas) {
+    try {
+      mountInfiniteMenu(
+        menuCanvas,
+        defaultItems,
+        0.9,
+        document.getElementById('infiniteMenuTitle'),
+        document.getElementById('infiniteMenuButton')
+      );
+    } catch (err) {
+      console.error('InfiniteMenu failed to initialize:', err);
+    }
+  }
+})();
+</script>
+
+<script>
+/* =========================================================================
+   WORKS VIEW — full-screen takeover shown when a category's "Enter" button
+   is clicked. Big player with prev/next arrows to step through clips, and
+   a Back button that returns to the portfolio section.
+   ========================================================================= */
+(function () {
+  // Add/remove entries here per category. Videography currently points at
+  // your uploaded clips — keep the filenames exactly as given.
+  const WORKS_DATA = {
+    'videography': {
+      type: 'video',
+      title: 'Videography',
+      items: [
+        { src: 'works/zedit1.mp4', label: 'Edit 01' },
+        { src: 'works/zedit2.mp4', label: 'Edit 02' },
+        { src: 'works/zedit3.mp4', label: 'Edit 03' },
+        { src: 'works/zedit4.mp4', label: 'Edit 04' },
+        { src: 'works/zedit5.mp4', label: 'Edit 05' },
+        { src: 'works/zedit6.mp4', label: 'Edit 06' }
+      ]
+    },
+    'digital-marketing': {
+      type: 'video',
+      title: 'Content Marketing',
+      items: [
+        { src: 'works/IMG_2070.mp4', label: 'Clip 01' },
+        { src: 'works/IMG_2102.mp4', label: 'Clip 02' },
+        { src: 'works/IMG_2151.mp4', label: 'Clip 03' },
+        { src: 'works/IMG_1578.mp4', label: 'Clip 04' },
+        { src: 'works/IMG_1579.mp4', label: 'Clip 05' }
+      ]
+    }
+  };
+
+  const worksView = document.getElementById('worksView');
+  const worksViewTitle = document.getElementById('worksViewTitle');
+  const worksViewVideo = document.getElementById('worksViewVideo');
+  const worksViewImage = document.getElementById('worksViewImage');
+  const worksViewPrev = document.getElementById('worksViewPrev');
+  const worksViewNext = document.getElementById('worksViewNext');
+  const worksViewCounter = document.getElementById('worksViewCounter');
+  const worksViewBack = document.getElementById('worksViewBack');
+
+  if (!worksView) return;
+
+  let lastScrollY = 0;
+  let currentData = null;
+  let currentIndex = 0;
+
+  function showItem(item, type) {
+    if (type === 'video') {
+      worksViewImage.classList.remove('is-showing');
+      worksViewImage.removeAttribute('src');
+      worksViewVideo.pause();
+      worksViewVideo.src = item.src;
+      worksViewVideo.classList.add('is-showing');
+      worksViewVideo.load();
+      worksViewVideo.play().catch(() => {});
+    } else {
+      worksViewVideo.pause();
+      worksViewVideo.classList.remove('is-showing');
+      worksViewVideo.removeAttribute('src');
+      worksViewImage.src = item.src;
+      worksViewImage.classList.add('is-showing');
+    }
+  }
+
+  function renderCurrent() {
+    if (!currentData) return;
+    const item = currentData.items[currentIndex];
+    showItem(item, currentData.type);
+    worksViewCounter.innerHTML =
+      (item.label ? '<strong>' + item.label + '</strong> · ' : '') + (currentIndex + 1) + ' / ' + currentData.items.length;
+    worksViewPrev.disabled = currentIndex === 0;
+    worksViewNext.disabled = currentIndex === currentData.items.length - 1;
+  }
+
+  function goPrev() {
+    if (!currentData || currentIndex <= 0) return;
+    currentIndex -= 1;
+    renderCurrent();
+  }
+
+  function goNext() {
+    if (!currentData || currentIndex >= currentData.items.length - 1) return;
+    currentIndex += 1;
+    renderCurrent();
+  }
+
+  function openWorksView(category) {
+    const data = WORKS_DATA[category];
+    if (!data || !data.items.length) return;
+
+    currentData = data;
+    currentIndex = 0;
+    worksViewTitle.textContent = data.title;
+    renderCurrent();
+
+    lastScrollY = window.scrollY;
+    worksView.classList.add('is-open');
+    worksView.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('works-view-active');
+  }
+
+  function closeWorksView() {
+    worksView.classList.remove('is-open');
+    worksView.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('works-view-active');
+    worksViewVideo.pause();
+    worksViewVideo.removeAttribute('src');
+    worksViewVideo.classList.remove('is-showing');
+    worksViewImage.removeAttribute('src');
+    worksViewImage.classList.remove('is-showing');
+    currentData = null;
+    window.scrollTo({ top: lastScrollY, behavior: 'instant' });
+  }
+
+  worksViewBack.addEventListener('click', closeWorksView);
+  worksViewPrev.addEventListener('click', goPrev);
+  worksViewNext.addEventListener('click', goNext);
+
+  window.addEventListener('keydown', (e) => {
+    if (!worksView.classList.contains('is-open')) return;
+    if (e.key === 'Escape') closeWorksView();
+    else if (e.key === 'ArrowLeft') goPrev();
+    else if (e.key === 'ArrowRight') goNext();
+  });
+
+  // Exposed so the click-triggered "Enter" button (in the other script
+  // block) can jump straight to a category's works view.
+  window.openWorksView = openWorksView;
+})();
+</script>
+</body>
+</html>
