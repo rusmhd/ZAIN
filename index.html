@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Zain Mohideen | Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/gl-matrix-min.js"></script>
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #06060a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #06060a; overflow-x: hidden; width: 100%; }
 
   /* ============== SCENE (hero copy -> photo -> frame-sequence, one continuous pin) ============== */
   .scene-scroll-wrapper { position: relative; width: 100%; }
@@ -422,18 +422,20 @@
     filter: blur(0);
     pointer-events: auto;
   }
+  @media (hover: hover) and (pointer: fine) {
   .bg-media-enter:hover {
     background: linear-gradient(120deg, rgba(232, 121, 249, 0.28), rgba(95, 30, 206, 0.28));
     border-color: var(--accent-a, #e879f9);
     color: #ffffff;
     box-shadow: 0 10px 26px var(--accent-shadow, rgba(232, 121, 249, 0.3));
   }
+  }
   .bg-media-enter.is-active:hover {
     transform: translate(-50%, calc(240% + 70px)) scale(1.07);
   }
   .portfolio-btn {
     font-family: 'Inter', sans-serif;
-    font-size: 0.95rem;
+    font-size: max(0.95rem, 16px);
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -450,12 +452,14 @@
   /* Hover is a pure visual highlight now — it grows/brightens the pill but
      does not reveal the background media or preview thumbnails. That only
      happens once the button is actually clicked (see .is-selected below). */
+  @media (hover: hover) and (pointer: fine) {
   .portfolio-btn:hover {
     background: linear-gradient(120deg, rgba(232, 121, 249, 0.18), rgba(95, 30, 206, 0.18));
     border-color: #e879f9;
     color: #ffffff;
     box-shadow: 0 10px 28px rgba(232, 121, 249, 0.28);
     transform: scale(1.07);
+  }
   }
   /* Selected state — applied once the button has been clicked and its
      category is the active one, so it's visually obvious which pill is
@@ -675,10 +679,12 @@
     border: 1px solid rgba(232, 121, 249, 0.22);
     transition: border-color 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
   }
+  @media (hover: hover) and (pointer: fine) {
   .about-card:hover {
     border-color: rgba(232, 121, 249, 0.55);
     transform: translateY(-4px);
     box-shadow: 0 16px 34px rgba(0,0,0,0.4);
+  }
   }
   .about-card-num {
     font-family: 'Playfair Display', serif;
