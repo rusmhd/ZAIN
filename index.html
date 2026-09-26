@@ -33,7 +33,13 @@
   }
   .hero-photo img { height: 100%; width: auto; max-width: 62vw; object-fit: contain; object-position: bottom; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.55)); }
   @media (max-width: 640px) {
-    .hero-photo { display: none; }
+    .hero-photo {
+      display: flex;
+      left: 72%;
+      height: 60vh;
+      opacity: 0.6;
+    }
+    .hero-photo img { max-width: 85vw; }
   }
   .hero-eyebrow {
     font-family: 'Inter', sans-serif; font-size: 0.8rem; letter-spacing: 0.28em;
